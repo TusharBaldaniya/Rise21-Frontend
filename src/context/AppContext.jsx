@@ -63,6 +63,9 @@ export function AppProvider({ children }) {
     setIsInstallable(false);
   };
 
+  // Base API URL configuration for deployments
+  const API_BASE = import.meta.env.VITE_API_URL || '';
+
   // Fetch helper with auth headers
   const apiFetch = async (url, options = {}) => {
     const headers = {
@@ -72,7 +75,7 @@ export function AppProvider({ children }) {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(`${API_BASE}${url}`, { ...options, headers });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error || 'API Request Failed');
@@ -188,7 +191,7 @@ export function AppProvider({ children }) {
 
   const fetchDailyQuote = async () => {
     try {
-      const data = await fetch('/api/quote').then(r => r.json());
+      const data = await fetch(`${API_BASE}/api/quote`).then(r => r.json());
       setDailyQuote(data);
     } catch (err) {
       console.error('Fetch quote error:', err);
