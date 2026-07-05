@@ -219,6 +219,24 @@ export function AppProvider({ children }) {
     }
   }, [activeTab]);
 
+  // Keep-alive scheduler for free-tier backend hosting (pings health endpoint every 30 minutes)
+  useEffect(() => {
+    const keepAlive = () => {
+      fetch(`${API_BASE}/api/health`)
+        .then(r => r.json())
+        .then(data => console.log('Keep-alive ping success:', data.status))
+        .catch(err => console.error('Keep-alive ping failed:', err));
+    };
+
+    // Ping immediately on load
+    keepAlive();
+
+    // Ping every 30 minutes (30 * 60 * 1000 ms)
+    const interval = setInterval(keepAlive, 30 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AppContext.Provider value={{
       token,
