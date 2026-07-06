@@ -141,7 +141,7 @@ export default function Profile() {
             No selfies captured yet. Capture a daily selfie to track your 21-day transformation!
           </p>
         ) : (
-          <div className="grid grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-3 gap-3 pr-1">
             {selfies.map((s, idx) => (
               <div key={s.id} className="flex flex-col items-center">
                 <div className="w-full aspect-square rounded-2xl overflow-hidden border border-cream-200 shadow-sm relative group bg-cream-50">

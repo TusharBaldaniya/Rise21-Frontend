@@ -255,7 +255,7 @@ export default function Wallet() {
             No accountability charges yet. Keep it up.
           </p>
         ) : (
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+          <div className="space-y-3 pr-1">
             {wallet.transactions.map(t => {
               const formattedDate = new Date(t.date).toLocaleDateString('en-US', {
                 month: 'short',
