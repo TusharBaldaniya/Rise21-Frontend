@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Award, Flame, Target, DollarSign, Calendar, TrendingUp, User } from 'lucide-react';
+import { Award, Flame, Target, DollarSign, Calendar, TrendingUp, User, Smile } from 'lucide-react';
 
 export default function Insights() {
   const { insights, setActiveTab } = useApp();
@@ -45,6 +45,42 @@ export default function Insights() {
         >
           <User className="w-5 h-5" />
         </button>
+      </div>
+
+      {/* Achievement Rank Level Banner Card */}
+      <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider opacity-90 block mb-1">
+            Current Discipline Rank
+          </span>
+          <h2 className="font-serif text-2xl font-bold tracking-tight flex items-center gap-1.5">
+            {insights.bestStreak >= 15 
+              ? '👑 Master' 
+              : insights.bestStreak >= 8 
+              ? '⚔️ Disciplined' 
+              : insights.bestStreak >= 4 
+              ? '🔥 Consistent' 
+              : '🌱 Beginner'}
+          </h2>
+          <p className="text-[10px] opacity-90 mt-1 font-sans">
+            {insights.bestStreak >= 15 
+              ? 'Incredible! You have mastered self-control.' 
+              : insights.bestStreak >= 8 
+              ? 'Keep going! Master rank unlocks at a 15-day streak.' 
+              : insights.bestStreak >= 4 
+              ? 'Great consistency! Disciplined rank unlocks at 8 days.' 
+              : 'Maintain a 4-day streak to unlock Consistent rank!'}
+          </p>
+        </div>
+        <div className="bg-white/15 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+          {insights.bestStreak >= 15 
+            ? '👑' 
+            : insights.bestStreak >= 8 
+            ? '⚔️' 
+            : insights.bestStreak >= 4 
+            ? '🔥' 
+            : '🌱'}
+        </div>
       </div>
 
       {/* 4 Stat Boxes Grid */}
@@ -103,60 +139,103 @@ export default function Insights() {
           </p>
         </div>
 
-      </div>
-
-      {/* Last 7 Days Completion Rate Chart */}
+      </div>      {/* Last 7 Days Completion Rate Chart */}
       <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
         <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-sage-500" />
-          <span>Last 7 Days</span>
+          <span>Weekly Discipline (Last 7 Days)</span>
         </h3>
 
-        {/* Custom SVG Bar Chart */}
-        <div className="relative h-[160px] w-full pt-4 font-sans text-[10px]">
-          {/* Y-axis Guideline markers */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-cream-300 pr-1 select-none">
-            <div className="border-b border-dashed border-cream-100 w-full text-right pb-1">100%</div>
-            <div className="border-b border-dashed border-cream-100 w-full text-right pb-1">50%</div>
-            <div className="border-b border-dashed border-cream-100 w-full text-right pb-1">0%</div>
-          </div>
+        {/* Improved Vertical Track Bar Chart */}
+        <div className="flex justify-between items-end h-[160px] px-2 pt-6 font-sans">
+          {insights.last7Days.map((dayItem, idx) => {
+            const rate = dayItem.rate;
+            const moodMap = {
+              'Peaceful': '😌',
+              'Good': '🙂',
+              'Average': '😐',
+              'Bad': '😔'
+            };
+            const matchingMoodObj = insights.recentMoods?.find(rm => rm.date === dayItem.date);
+            const moodEmoji = matchingMoodObj ? moodMap[matchingMoodObj.mood] : null;
 
-          {/* Bar Chart Container */}
-          <div className="absolute inset-0 flex justify-between items-end px-6 pt-3">
-            {insights.last7Days.map((dayItem, idx) => {
-              // Calculate percentage height
-              const heightPct = dayItem.rate;
-              const barHeight = `${Math.max(5, heightPct)}%`;
-              
-              return (
-                <div key={idx} className="flex flex-col items-center flex-1 group">
-                  {/* Tooltip on hover */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-sage-800 text-white rounded px-2 py-0.5 text-[9px] absolute mb-12 transform -translate-y-8 pointer-events-none font-mono">
-                    {dayItem.rate}% ({dayItem.completed} check-ins)
-                  </div>
-                  
-                  {/* Visual Bar */}
+            return (
+              <div key={idx} className="flex flex-col items-center flex-1">
+                {/* Rate above the bar */}
+                <span className="text-[9px] font-mono font-bold text-sage-800 mb-1">
+                  {rate}%
+                </span>
+                
+                {/* Bar Track Container */}
+                <div className="w-3 bg-cream-50 border border-cream-200 rounded-full h-24 flex items-end overflow-hidden">
                   <div 
-                    style={{ height: barHeight }}
-                    className={`w-4 rounded-full transition-all duration-300 ${
-                      heightPct > 70 
-                        ? 'bg-sage-500 group-hover:bg-sage-600' 
-                        : heightPct > 30 
-                        ? 'bg-sage-300 group-hover:bg-sage-400'
-                        : heightPct > 0
-                        ? 'bg-red-300 group-hover:bg-red-400'
-                        : 'bg-cream-200'
+                    style={{ height: `${rate}%` }}
+                    className={`w-full rounded-full transition-all duration-500 ${
+                      rate > 70 
+                        ? 'bg-sage-500' 
+                        : rate > 30 
+                        ? 'bg-sage-300'
+                        : rate > 0
+                        ? 'bg-red-400'
+                        : 'bg-transparent'
                     }`}
                   />
-                  {/* Label */}
-                  <span className="text-[10px] text-cream-500 font-semibold mt-2">
-                    {dayItem.day}
-                  </span>
                 </div>
-              );
-            })}
+                
+                {/* Day Label */}
+                <span className="text-[10px] text-cream-500 font-semibold mt-2">
+                  {dayItem.day}
+                </span>
+
+                {/* Mood Indicator below day label */}
+                <span className="text-xs mt-1 min-h-[16px]" title={matchingMoodObj?.mood || 'No journal entry'}>
+                  {moodEmoji || '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mood Trends Summary Card */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 flex items-center gap-2">
+          <Smile className="w-4 h-4 text-sage-500" />
+          <span>Mood Trends</span>
+        </h3>
+        
+        <div className="flex items-center justify-between bg-cream-50/50 border border-cream-100 rounded-2xl p-4">
+          <div>
+            <span className="text-[10px] font-semibold text-cream-400 uppercase tracking-wider block mb-0.5">
+              Dominant Mood This Week
+            </span>
+            <strong className="text-sm font-bold text-sage-900 font-sans">
+              {insights.dominantMood === 'Peaceful' 
+                ? '😌 Peaceful' 
+                : insights.dominantMood === 'Good' 
+                ? '🙂 Good' 
+                : insights.dominantMood === 'Average' 
+                ? '😐 Average' 
+                : insights.dominantMood === 'Bad' 
+                ? '😔 Bad' 
+                : 'No reflection logs yet'}
+            </strong>
+          </div>
+          <div className="text-3xl">
+            {insights.dominantMood === 'Peaceful' 
+              ? '😌' 
+              : insights.dominantMood === 'Good' 
+              ? '🙂' 
+              : insights.dominantMood === 'Average' 
+              ? '😐' 
+              : insights.dominantMood === 'Bad' 
+              ? '😔' 
+              : '📝'}
           </div>
         </div>
+        <p className="text-[10px] text-cream-400 mt-3 leading-relaxed font-sans">
+          Log your evening reflections in the Journal to see how your mood tracks with your habits.
+        </p>
       </div>
 
       {/* Most Missed Habits */}

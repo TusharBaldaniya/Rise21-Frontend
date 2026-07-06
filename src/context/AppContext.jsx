@@ -189,25 +189,56 @@ export function AppProvider({ children }) {
     }
   };
 
-  const fetchDailyQuote = async () => {
+  const fetchDailyQuote = async (categories = '') => {
     try {
-      const data = await fetch(`${API_BASE}/api/quote`).then(r => r.json());
+      const url = categories ? `${API_BASE}/api/quote?categories=${categories}` : `${API_BASE}/api/quote`;
+      const data = await fetch(url).then(r => r.json());
       setDailyQuote(data);
     } catch (err) {
       console.error('Fetch quote error:', err);
     }
   };
 
+  const fetchUserProfile = async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch('/api/auth/me');
+      setUser(data);
+      localStorage.setItem('sadhna_user', JSON.stringify(data));
+    } catch (err) {
+      console.error('Fetch profile error:', err);
+    }
+  };
+
   // Auto load user session details
   useEffect(() => {
     if (token) {
+      fetchUserProfile();
       fetchChallenges();
       fetchWallet();
       fetchTodayCheckIns();
       fetchInsights();
-      fetchDailyQuote();
     }
   }, [token]);
+
+  // Request categorized quote when challenges update
+  useEffect(() => {
+    if (token && challenges.length > 0) {
+      const cats = [];
+      challenges.filter(c => c.isActive).forEach(c => {
+        const t = c.title.toLowerCase();
+        if (t.includes('read') || t.includes('book') || t.includes('study') || t.includes('vanchan')) cats.push('wisdom');
+        else if (t.includes('run') || t.includes('gym') || t.includes('walk') || t.includes('exercise') || t.includes('workout') || t.includes('suryanamaskar') || t.includes('sport')) cats.push('fitness');
+        else if (t.includes('pray') || t.includes('prarthana') || t.includes('meditate') || t.includes('yoga') || t.includes('spiritual')) cats.push('spirituality');
+        else if (t.includes('save') || t.includes('money') || t.includes('spend') || t.includes('budget') || t.includes('wallet')) cats.push('wealth');
+        else cats.push('discipline');
+      });
+      const uniqueCats = Array.from(new Set(cats)).join(',');
+      fetchDailyQuote(uniqueCats);
+    } else if (token) {
+      fetchDailyQuote();
+    }
+  }, [challenges, token]);
 
   // Periodic refresh when tab switches
   useEffect(() => {

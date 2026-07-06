@@ -49,7 +49,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream-50 flex justify-center items-center">
       {/* Mobile-first app container with mock device border */}
-      <div className="w-full max-w-[420px] h-[100vh] sm:h-[880px] bg-cream-100 sm:rounded-[40px] sm:border-[8px] sm:border-sage-800 flex flex-col relative shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[420px] h-[100dvh] sm:h-[880px] bg-cream-100 sm:rounded-[40px] sm:border-[8px] sm:border-sage-800 flex flex-col relative shadow-2xl overflow-hidden overscroll-y-contain">
         
         {/* Main Content Area */}
         <div className="flex-1 overflow-hidden">
@@ -57,7 +57,7 @@ export default function App() {
         </div>
 
         {/* Bottom Navigation Bar - Glass Panel matching the mockup */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-cream-50 border-t border-cream-200 flex items-center justify-around px-4 z-40">
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-cream-50/90 backdrop-blur-md border-t border-cream-200 flex items-center justify-around px-4 z-40">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

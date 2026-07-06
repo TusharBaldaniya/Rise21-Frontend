@@ -37,18 +37,9 @@ export default function Auth() {
       <div className="w-full max-w-md bg-white rounded-3xl border border-sage-100 p-8 shadow-premium text-center">
         
         {/* Calming Brand Icon & Title */}
-        <div className="flex justify-center mb-2">
-          <div className="w-14 h-14 bg-sage-50 rounded-full flex items-center justify-center border border-sage-100">
-            <Sparkles className="w-6 h-6 text-sage-500" />
-          </div>
+        <div className="flex justify-center mb-6">
+          <img src="/Rise21.png" alt="Rise21 Logo" className="w-48 h-48 object-contain" />
         </div>
-        
-        <h1 className="font-serif text-3xl text-sage-800 tracking-tight mb-1 font-bold">
-          Sadhna
-        </h1>
-        <p className="text-cream-600 text-sm font-sans mb-8">
-          Self-discipline, habit building, and accountability
-        </p>
 
         {/* Auth Error Display */}
         {error && (
@@ -138,7 +129,7 @@ export default function Auth() {
         <div className="mt-8 pt-6 border-t border-cream-200 text-sm font-sans">
           {isLogin ? (
             <p className="text-cream-600">
-              New to Sadhna?{' '}
+              New to Rise21?{' '}
               <button
                 onClick={() => {
                   setIsLogin(false);

@@ -120,6 +120,34 @@ export default function Wallet() {
         </div>
       </div>
 
+      {/* Habit Impact / Redirect summaries */}
+      {wallet.redirected > 0 && (
+        <div className="bg-sage-50/50 border border-sage-100 rounded-3xl p-4 shadow-sm mb-6 text-xs text-sage-800 font-sans leading-relaxed">
+          <div className="font-semibold text-sage-900 mb-1.5 flex items-center gap-1.5">
+            <span>✨ Redirected Savings</span>
+          </div>
+          <ul className="space-y-1.5">
+            {Object.entries(
+              wallet.transactions
+                .filter(t => t.type === 'redirection')
+                .reduce((acc, t) => {
+                  acc[t.category] = (acc[t.category] || 0) + t.amount;
+                  return acc;
+                }, {})
+            ).map(([cat, amt]) => {
+              const icons = { 'Books': '📚', 'Charity': '💖', 'Help': '🤝' };
+              const icon = icons[cat] || '🌱';
+              return (
+                <li key={cat} className="flex items-center gap-1.5">
+                  <span>{icon}</span>
+                  <span>Redirected <strong>₹{amt}</strong> to {cat.toLowerCase()}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {/* Redirection Tool */}
       <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
         <h3 className="font-serif text-lg font-bold text-sage-800 mb-1">
@@ -227,26 +255,38 @@ export default function Wallet() {
             No accountability charges yet. Keep it up.
           </p>
         ) : (
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-            {wallet.transactions.map(t => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between py-2 border-b border-cream-50 text-xs font-sans"
-              >
-                <div className="pr-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`font-semibold ${t.type === 'charge' ? 'text-red-700' : 'text-sage-800'}`}>
-                      {t.type === 'charge' ? 'Penalty Charge' : 'Redirection'}
-                    </span>
-                    <span className="text-[10px] text-cream-400 font-normal">({new Date(t.date).toLocaleDateString()})</span>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+            {wallet.transactions.map(t => {
+              const formattedDate = new Date(t.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+              });
+
+              return (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between p-3.5 border border-cream-200 rounded-2xl bg-cream-50/20 text-xs font-sans"
+                >
+                  <div className="pr-4">
+                    <div className="text-[9px] text-cream-400 font-bold uppercase tracking-wider mb-1 font-mono">
+                      {formattedDate}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs">
+                        {t.type === 'charge' ? '❌' : '✅'}
+                      </span>
+                      <span className={`font-semibold ${t.type === 'charge' ? 'text-red-700' : 'text-sage-800'}`}>
+                        {t.type === 'charge' ? 'Missed Habit' : `Redirected to ${t.category}`}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-cream-655 mt-1 leading-snug font-medium">{t.description}</p>
                   </div>
-                  <p className="text-[11px] text-cream-600 mt-0.5 leading-snug">{t.description}</p>
+                  <span className={`font-mono font-bold text-sm ${t.type === 'charge' ? 'text-red-600' : 'text-sage-600'}`}>
+                    {t.type === 'charge' ? '+' : '-'}₹{t.amount}
+                  </span>
                 </div>
-                <span className={`font-mono font-bold text-sm ${t.type === 'charge' ? 'text-red-600' : 'text-sage-600'}`}>
-                  {t.type === 'charge' ? '+' : '-'}₹{t.amount}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

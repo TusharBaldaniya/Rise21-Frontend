@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, LogOut, Calendar, Shield, Award, Sparkles, Smartphone, Download } from 'lucide-react';
 
@@ -12,8 +12,69 @@ export default function Profile() {
     isInstallable,
     isIOS,
     isStandalone,
-    triggerPwaInstall
+    triggerPwaInstall,
+    apiFetch,
+    getTodayDateString
   } = useApp();
+
+  const [selfies, setSelfies] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const fetchSelfies = async () => {
+    try {
+      const data = await apiFetch('/api/selfies');
+      setSelfies(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSelfies();
+  }, []);
+
+  const handleSelfieChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const size = 300; 
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        
+        try {
+          await apiFetch('/api/selfies', {
+            method: 'POST',
+            body: JSON.stringify({
+              date: getTodayDateString(),
+              imageBlob: compressedBase64
+            })
+          });
+          await fetchSelfies();
+        } catch (err) {
+          console.error(err);
+          alert('Could not upload selfie: ' + err.message);
+        } finally {
+          setUploading(false);
+        }
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (!user) return null;
 
@@ -55,10 +116,59 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* 📸 Journey Gallery */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <div className="flex justify-between items-center mb-4 border-b border-cream-50 pb-2">
+          <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 flex items-center gap-1.5">
+            <Smartphone className="w-4 h-4 text-sage-500" />
+            <span>📸 Journey Gallery</span>
+          </h3>
+          <label className={`cursor-pointer bg-sage-500 hover:bg-sage-600 text-white font-semibold py-1.5 px-3 rounded-xl text-[10px] transition-all flex items-center gap-1 shadow-sm active:scale-95 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <span>{uploading ? 'Uploading...' : 'Capture Selfie'}</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="user" 
+              className="hidden" 
+              onChange={handleSelfieChange}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+
+        {selfies.length === 0 ? (
+          <p className="text-xs text-cream-400 font-sans italic text-center py-6 leading-relaxed">
+            No selfies captured yet. Capture a daily selfie to track your 21-day transformation!
+          </p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-1">
+            {selfies.map((s, idx) => (
+              <div key={s.id} className="flex flex-col items-center">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden border border-cream-200 shadow-sm relative group bg-cream-50">
+                  <img 
+                    src={s.imageBlob} 
+                    alt={`Day ${idx + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                    <span className="text-[9px] text-white font-semibold font-mono">
+                      {new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] text-cream-500 font-semibold mt-1 font-sans">
+                  Day {idx + 1}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Profile statistics */}
       <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
         <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2">
-          Sadhna Stats
+          Rise21 Stats
         </h3>
 
         <div className="space-y-4 text-xs font-sans">
@@ -104,19 +214,19 @@ export default function Profile() {
           <div className="bg-sage-50 border border-sage-200 text-sage-800 rounded-2xl p-4 text-xs flex flex-col items-center text-center">
             <span className="text-xl mb-1 text-sage-500 font-bold">✓</span>
             <strong className="font-semibold font-serif text-sage-900">Running as Mobile App</strong>
-            <p className="opacity-90 mt-1 leading-snug text-cream-600">Sadhna is fully installed and optimized for home screen usage!</p>
+            <p className="opacity-90 mt-1 leading-snug text-cream-600">Rise21 is fully installed and optimized for home screen usage!</p>
           </div>
         ) : isInstallable ? (
           <div className="text-xs font-sans space-y-4">
             <p className="text-cream-600 leading-relaxed">
-              Install Sadhna on your home screen for quick mobile access, offline tracking, and native notifications.
+              Install Rise21 on your home screen for quick mobile access, offline tracking, and native notifications.
             </p>
             <button
               onClick={triggerPwaInstall}
               className="w-full bg-sage-500 hover:bg-sage-600 text-white font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
-              <span>Install Sadhna App</span>
+              <span>Install Rise21 App</span>
             </button>
           </div>
         ) : isIOS ? (
@@ -125,7 +235,7 @@ export default function Profile() {
             <ol className="list-decimal list-inside space-y-1.5 leading-snug text-cream-600">
               <li>Tap the <strong className="text-sage-850">Share</strong> icon at the bottom of Safari.</li>
               <li>Scroll down the menu and tap <strong className="text-sage-850">"Add to Home Screen"</strong>.</li>
-              <li>Name it "Sadhna" and tap <strong className="text-sage-850">Add</strong>.</li>
+              <li>Name it "Rise21" and tap <strong className="text-sage-850">Add</strong>.</li>
             </ol>
             <p className="text-[10px] text-cream-400 leading-snug pt-1">
               Note: This feature requires opening this website using the native iOS Safari browser.
@@ -151,7 +261,7 @@ export default function Profile() {
           <span>Rules of Accountability</span>
         </div>
         <p className="font-sans">
-          Sadhna is designed to build discipline. Every time you miss a target or fall off center, a small charge is logged. 
+          Rise21 is designed to build discipline. Every time you miss a target or fall off center, a small charge is logged. 
           Use this money to buy books, help a neighbor, or donate to charity. 
           Become 1% better every day.
         </p>

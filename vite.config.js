@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'Sadhna — 21 Day Challenge Tracker',
-        short_name: 'Sadhna',
+        name: 'Rise21 — 21 Day Challenge Tracker',
+        short_name: 'Rise21',
         description: 'Accountability, self-discipline and daily checklist tracking.',
         theme_color: '#5a7255',
         background_color: '#f5f4eb',

@@ -36,6 +36,7 @@ export default function Journal() {
   const [mistake, setMistake] = useState('');
   const [improvement, setImprovement] = useState('');
   const [gratitude, setGratitude] = useState('');
+  const [mood, setMood] = useState('');
   const [savingReflection, setSavingReflection] = useState(false);
   const [reflectionSaved, setReflectionSaved] = useState(false);
 
@@ -66,6 +67,7 @@ export default function Journal() {
         setMistake(data.mistake || '');
         setImprovement(data.improvement || '');
         setGratitude(data.gratitude || '');
+        setMood(data.mood || '');
       }
     } catch (err) {
       console.error(err);
@@ -162,7 +164,8 @@ export default function Journal() {
           goodThing,
           mistake,
           improvement,
-          gratitude
+          gratitude,
+          mood
         })
       });
       setReflectionSaved(true);
@@ -340,6 +343,34 @@ export default function Journal() {
         </p>
 
         <form onSubmit={handleSaveReflection} className="space-y-5 text-left">
+          {/* Mood Selector Buttons */}
+          <div>
+            <label className="block text-xs font-semibold text-cream-600 uppercase tracking-wider mb-2 ml-1">
+              How do you feel today?
+            </label>
+            <div className="flex gap-2">
+              {[
+                { label: '😌 Peaceful', val: 'Peaceful' },
+                { label: '🙂 Good', val: 'Good' },
+                { label: '😐 Average', val: 'Average' },
+                { label: '😔 Bad', val: 'Bad' }
+              ].map(opt => (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => setMood(opt.val)}
+                  className={`flex-1 py-2.5 rounded-xl border text-[11px] font-semibold font-sans transition-all active:scale-[0.98] ${
+                    mood === opt.val
+                      ? 'bg-sage-50 border-sage-500 text-sage-800 shadow-sm'
+                      : 'bg-cream-50/50 border-cream-200 text-cream-600 hover:bg-cream-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-cream-600 uppercase tracking-wider mb-2 ml-1">
               One good thing you did
@@ -419,9 +450,16 @@ export default function Journal() {
           <div className="space-y-4">
             {reflectionsHistory.map(history => (
               <div key={history.id} className="bg-white border border-sage-50 rounded-3xl p-5 shadow-premium">
-                <div className="flex items-center gap-2 mb-3 text-xs text-cream-500 font-sans">
-                  <Smile className="w-4 h-4 text-sage-400" />
-                  <span>{new Date(history.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <div className="flex justify-between items-center mb-3 text-xs text-cream-500 font-sans">
+                  <div className="flex items-center gap-2">
+                    <Smile className="w-4 h-4 text-sage-400" />
+                    <span>{new Date(history.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                  </div>
+                  {history.mood && (
+                    <span className="bg-sage-100 text-sage-800 border border-sage-200/50 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                      {history.mood === 'Peaceful' ? '😌 Peaceful' : history.mood === 'Good' ? '🙂 Good' : history.mood === 'Average' ? '😐 Average' : '😔 Bad'}
+                    </span>
+                  )}
                 </div>
                 
                 <div className="space-y-3 text-xs font-sans">
