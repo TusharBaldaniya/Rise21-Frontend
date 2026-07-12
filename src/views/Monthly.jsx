@@ -175,7 +175,7 @@ export default function Monthly() {
   }
 
   return (
-    <div className="flex flex-col h-full font-sans">
+    <div className="flex flex-col font-sans">
       
       {/* Month Navigation Selector Bar */}
       <div className="flex justify-between items-center bg-white border border-sage-100 rounded-3xl p-4 shadow-sm mb-6 mt-2">
@@ -235,8 +235,7 @@ export default function Monthly() {
               <table className="w-full text-left border-collapse table-fixed select-none">
                 <thead>
                   <tr className="bg-cream-50/50 border-b border-cream-150 text-[10px] text-cream-600 font-bold uppercase tracking-wider">
-                    {/* Sticky Column challenge header */}
-                    <th className="sticky left-0 bg-cream-50 border-r border-cream-150 p-2.5 w-[110px] min-w-[110px] text-[9px] z-10">
+                    <th className="bg-cream-50 border-r border-cream-150 p-2.5 w-[110px] min-w-[110px] text-[9px]">
                       Challenge
                     </th>
                     {datesArray.map(day => (
@@ -249,8 +248,7 @@ export default function Monthly() {
                 <tbody>
                   {challenges.map(ch => (
                     <tr key={ch.id} className="border-b border-cream-100 hover:bg-cream-50/20 text-xs transition-colors">
-                      {/* Sticky Row challenge Title */}
-                      <td className="sticky left-0 bg-white border-r border-cream-150 p-2.5 font-semibold text-sage-900 flex items-center gap-1.5 truncate z-10">
+                      <td className="bg-white border-r border-cream-150 p-2.5 font-semibold text-sage-900 flex items-center gap-1.5 truncate">
                         <span className="text-sm">{ch.icon || '🎯'}</span>
                         <span className="truncate">{ch.title}</span>
                       </td>
