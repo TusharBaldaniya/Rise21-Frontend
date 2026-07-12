@@ -10,16 +10,50 @@ export default function Insights() {
   const containerRef = useRef(null);
   const isScrollingRef = useRef(false);
 
-  const handleScroll = (e) => {
-    if (isScrollingRef.current) return;
-    const scrollLeft = e.currentTarget.scrollLeft;
-    const width = e.currentTarget.clientWidth;
-    if (width === 0) return;
-    const index = Math.round(scrollLeft / width);
-    const targetTab = index === 0 ? 'overview' : 'monthly';
-    if (subTab !== targetTab) {
-      setSubTab(targetTab);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+  const touchEndX = useRef(null);
+  const touchEndY = useRef(null);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (
+      touchStartX.current === null ||
+      touchStartY.current === null ||
+      touchEndX.current === null ||
+      touchEndY.current === null
+    ) {
+      return;
     }
+
+    const diffX = touchEndX.current - touchStartX.current;
+    const diffY = touchEndY.current - touchStartY.current;
+
+    const thresholdX = 55; // minimum horizontal swipe distance (px)
+    const ratio = 1.5; // X distance must be at least 1.5x of Y drift
+
+    if (Math.abs(diffX) > thresholdX && Math.abs(diffX) > Math.abs(diffY) * ratio) {
+      if (diffX < 0) {
+        scrollToTab('monthly');
+      } else {
+        scrollToTab('overview');
+      }
+    }
+
+    // Reset coordinates
+    touchStartX.current = null;
+    touchStartY.current = null;
+    touchEndX.current = null;
+    touchEndY.current = null;
   };
 
   const scrollToTab = (tab) => {
@@ -121,9 +155,11 @@ export default function Insights() {
 
     <div 
       ref={containerRef}
-      onScroll={handleScroll}
-      className="flex-1 flex items-start overflow-x-auto snap-x snap-mandatory scroll-smooth w-full no-scrollbar pb-10"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="flex-1 flex items-start overflow-x-hidden scroll-smooth w-full no-scrollbar pb-10"
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
       {/* Slide 1: Overview */}
       <div className="w-full shrink-0 snap-start snap-always px-0.5">

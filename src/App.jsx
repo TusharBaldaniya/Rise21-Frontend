@@ -10,7 +10,7 @@ import Profile from './views/Profile';
 import { Home, Target, BookOpen, Wallet as WalletIcon, BarChart2 } from 'lucide-react';
 
 export default function App() {
-  const { token, activeTab, setActiveTab } = useApp();
+  const { token, activeTab, setActiveTab, inAppToast, setInAppToast } = useApp();
 
   // If user is not authenticated, show Auth Page
   if (!token) {
@@ -51,6 +51,24 @@ export default function App() {
       {/* Mobile-first app container with mock device border */}
       <div className="w-full max-w-[420px] h-[100dvh] sm:h-[880px] bg-cream-100 sm:rounded-[40px] sm:border-[8px] sm:border-sage-800 flex flex-col relative shadow-2xl overflow-hidden overscroll-y-contain">
         
+        {/* Global In-App Toast Notification */}
+        {inAppToast && inAppToast.show && (
+          <div className="absolute top-4 left-4 right-4 z-50 bg-white border border-sage-100 rounded-2xl p-4 shadow-premium flex items-center justify-between animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🎯</span>
+              <p className="text-xs font-sans text-sage-800 font-semibold leading-snug">
+                {inAppToast.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setInAppToast({ show: false, message: '' })}
+              className="text-cream-400 hover:text-sage-850 text-xs font-bold ml-2 p-1.5 focus:outline-none transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Main Content Area */}
         <div className="flex-1 overflow-hidden">
           {renderView()}

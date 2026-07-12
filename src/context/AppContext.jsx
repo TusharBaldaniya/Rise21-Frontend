@@ -30,6 +30,15 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Reminder Notification State
+  const [remindersEnabled, setRemindersEnabled] = useState(() => {
+    return localStorage.getItem('sadhna_reminders_enabled') === 'true';
+  });
+  const [reminderTime, setReminderTime] = useState(() => {
+    return localStorage.getItem('sadhna_reminder_time') || '20:00';
+  });
+  const [inAppToast, setInAppToast] = useState({ show: false, message: '' });
+
   // Handle PWA installation prompts
   useEffect(() => {
     const handleBeforeInstall = (e) => {
@@ -256,6 +265,110 @@ export function AppProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  const updateReminderSettings = (enabled, time) => {
+    setRemindersEnabled(enabled);
+    setReminderTime(time);
+    localStorage.setItem('sadhna_reminders_enabled', String(enabled));
+    localStorage.setItem('sadhna_reminder_time', time);
+    
+    if (enabled && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  };
+
+  const sendTestNotification = () => {
+    if (!('Notification' in window)) {
+      alert('Browser does not support notifications.');
+      return;
+    }
+    
+    const trigger = () => {
+      new Notification('Sadhna Habit Reminder 🎯', {
+        body: 'This is a test notification. Daily reminders are working!',
+        icon: '/Rise21.png',
+        badge: '/Rise21.png'
+      });
+    };
+
+    if (Notification.permission === 'granted') {
+      trigger();
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          trigger();
+        }
+      });
+    } else {
+      alert('Notification permissions are denied. Please enable them in browser settings.');
+    }
+  };
+
+  useEffect(() => {
+    if (inAppToast.show) {
+      const timer = setTimeout(() => {
+        setInAppToast({ show: false, message: '' });
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [inAppToast.show]);
+
+  // Periodic Daily Reminder Check
+  useEffect(() => {
+    if (!remindersEnabled || !token) return;
+
+    const checkAndNotify = () => {
+      if (!('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+
+      const now = new Date();
+      const currentHours = String(now.getHours()).padStart(2, '0');
+      const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+      if (currentTimeStr === reminderTime) {
+        const todayStr = getTodayDateString();
+        const lastNotified = localStorage.getItem('sadhna_last_notified_date');
+
+        if (lastNotified !== todayStr) {
+          const activeChallenges = challenges.filter(c => c.isActive);
+          if (activeChallenges.length === 0) return;
+
+          const uncheckedCount = activeChallenges.filter(c => {
+            return !todayCheckIns.some(ci => ci.challengeId === c.id);
+          }).length;
+
+          if (uncheckedCount > 0) {
+            try {
+              new Notification('Sadhna Habit Reminder 🎯', {
+                body: `You have ${uncheckedCount} active challenge${uncheckedCount > 1 ? 's' : ''} left to update today. Keep your streak alive!`,
+                icon: '/Rise21.png',
+                badge: '/Rise21.png'
+              });
+            } catch (err) {
+              console.error('Failed to trigger native notification:', err);
+            }
+
+            setInAppToast({
+              show: true,
+              message: `Don't forget to update your ${uncheckedCount} active challenge${uncheckedCount > 1 ? 's' : ''} today! 🎯`
+            });
+
+            localStorage.setItem('sadhna_last_notified_date', todayStr);
+          }
+        }
+      }
+    };
+
+    // Run check immediately
+    checkAndNotify();
+
+    // Check every 30 seconds
+    const checkInterval = setInterval(checkAndNotify, 30000);
+    return () => clearInterval(checkInterval);
+  }, [remindersEnabled, reminderTime, challenges, todayCheckIns, token]);
+
   return (
     <AppContext.Provider value={{
       token,
@@ -282,7 +395,13 @@ export function AppProvider({ children }) {
       isInstallable,
       isIOS,
       isStandalone,
-      triggerPwaInstall
+      triggerPwaInstall,
+      remindersEnabled,
+      reminderTime,
+      inAppToast,
+      setInAppToast,
+      updateReminderSettings,
+      sendTestNotification
     }}>
       {children}
     </AppContext.Provider>

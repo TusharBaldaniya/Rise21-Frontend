@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { User, LogOut, Calendar, Shield, Award, Sparkles, Smartphone, Download } from 'lucide-react';
+import { User, LogOut, Calendar, Shield, Award, Sparkles, Smartphone, Download, Bell } from 'lucide-react';
 
 export default function Profile() {
   const {
@@ -14,8 +14,50 @@ export default function Profile() {
     isStandalone,
     triggerPwaInstall,
     apiFetch,
-    getTodayDateString
+    getTodayDateString,
+    remindersEnabled,
+    reminderTime,
+    updateReminderSettings,
+    sendTestNotification
   } = useApp();
+
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState(
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    
+    const updatePermission = () => {
+      setNotificationPermissionStatus(Notification.permission);
+    };
+
+    window.addEventListener('focus', updatePermission);
+    return () => window.removeEventListener('focus', updatePermission);
+  }, []);
+
+  const handleToggleReminders = () => {
+    const nextVal = !remindersEnabled;
+    if (nextVal && 'Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        setNotificationPermissionStatus(permission);
+        if (permission === 'granted') {
+          updateReminderSettings(true, reminderTime);
+        } else {
+          updateReminderSettings(false, reminderTime);
+          if (permission === 'denied') {
+            alert('Notification permissions are blocked. Please enable them in browser settings.');
+          }
+        }
+      });
+    } else {
+      updateReminderSettings(nextVal, reminderTime);
+    }
+  };
+
+  const handleTimeChange = (newTime) => {
+    updateReminderSettings(remindersEnabled, newTime);
+  };
 
   const [selfies, setSelfies] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -252,6 +294,77 @@ export default function Profile() {
             </ul>
           </div>
         )}
+      </div>
+
+      {/* 🔔 Daily Reminders Settings Card */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
+          <Bell className="w-4 h-4 text-sage-500" />
+          <span>Daily Reminders</span>
+        </h3>
+
+        <div className="space-y-4 text-xs font-sans">
+          <div className="flex justify-between items-center py-1">
+            <div>
+              <span className="text-cream-700 font-semibold block">Enable Reminders</span>
+              <span className="text-[10px] text-cream-400">Get notified to update your habits</span>
+            </div>
+            <button
+              onClick={handleToggleReminders}
+              className={`w-11 h-6 rounded-full transition-colors relative flex items-center focus:outline-none ${
+                remindersEnabled ? 'bg-sage-500' : 'bg-cream-200'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 bg-white rounded-full absolute transition-transform shadow-sm ${
+                  remindersEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {remindersEnabled && (
+            <>
+              <div className="flex justify-between items-center py-1 border-t border-cream-50 pt-3">
+                <div>
+                  <span className="text-cream-700 font-semibold block">Reminder Time</span>
+                  <span className="text-[10px] text-cream-400">Set daily check-in prompt time</span>
+                </div>
+                <input
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => handleTimeChange(e.target.value)}
+                  className="bg-cream-50 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs text-sage-800 focus:outline-none focus:border-sage-300 font-semibold font-mono"
+                />
+              </div>
+
+              <div className="border-t border-cream-50 pt-3 flex justify-between items-center">
+                <div>
+                  <span className="text-cream-700 font-semibold block">Verification</span>
+                  <span className="text-[10px] text-cream-400">Test if permissions are correct</span>
+                </div>
+                <button
+                  onClick={sendTestNotification}
+                  className="bg-sage-50 border border-sage-200 text-sage-700 hover:bg-sage-100 font-semibold py-1.5 px-3 rounded-xl text-[10px] transition-all"
+                >
+                  Send Test Notification
+                </button>
+              </div>
+            </>
+          )}
+
+          {notificationPermissionStatus === 'denied' && (
+            <p className="text-[10px] text-red-500 italic mt-2 leading-normal">
+              ⚠️ Notifications are blocked by your browser. Please enable them in your browser settings to receive daily reminders.
+            </p>
+          )}
+
+          {notificationPermissionStatus === 'unsupported' && (
+            <p className="text-[10px] text-cream-500 italic mt-2 leading-normal">
+              ℹ️ Your device does not support native push notifications in this browser.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Rules of engagement reference card */}
