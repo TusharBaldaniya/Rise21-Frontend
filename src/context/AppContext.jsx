@@ -189,9 +189,9 @@ export function AppProvider({ children }) {
     }
   };
 
-  const fetchDailyQuote = async (categories = '') => {
+  const fetchDailyQuote = async () => {
     try {
-      const url = categories ? `${API_BASE}/api/quote?categories=${categories}` : `${API_BASE}/api/quote`;
+      const url = `${API_BASE}/api/quote`;
       const data = await fetch(url).then(r => r.json());
       setDailyQuote(data);
     } catch (err) {
@@ -221,24 +221,12 @@ export function AppProvider({ children }) {
     }
   }, [token]);
 
-  // Request categorized quote when challenges update
+  // Request random quote on startup/login
   useEffect(() => {
-    if (token && challenges.length > 0) {
-      const cats = [];
-      challenges.filter(c => c.isActive).forEach(c => {
-        const t = c.title.toLowerCase();
-        if (t.includes('read') || t.includes('book') || t.includes('study') || t.includes('vanchan')) cats.push('wisdom');
-        else if (t.includes('run') || t.includes('gym') || t.includes('walk') || t.includes('exercise') || t.includes('workout') || t.includes('suryanamaskar') || t.includes('sport')) cats.push('fitness');
-        else if (t.includes('pray') || t.includes('prarthana') || t.includes('meditate') || t.includes('yoga') || t.includes('spiritual')) cats.push('spirituality');
-        else if (t.includes('save') || t.includes('money') || t.includes('spend') || t.includes('budget') || t.includes('wallet')) cats.push('wealth');
-        else cats.push('discipline');
-      });
-      const uniqueCats = Array.from(new Set(cats)).join(',');
-      fetchDailyQuote(uniqueCats);
-    } else if (token) {
+    if (token) {
       fetchDailyQuote();
     }
-  }, [challenges, token]);
+  }, [token]);
 
   // Periodic refresh when tab switches
   useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, Archive, Calendar, DollarSign, Target, AlignLeft, Check, User, Pencil } from 'lucide-react';
+import { Plus, Trash2, Archive, Calendar, DollarSign, Target, AlignLeft, Check, User, Pencil, Flame } from 'lucide-react';
 
 export default function Challenges() {
   const {
@@ -10,7 +10,8 @@ export default function Challenges() {
     fetchTodayCheckIns,
     fetchInsights,
     getTodayDateString,
-    setActiveTab
+    setActiveTab,
+    insights
   } = useApp();
 
   const [showModal, setShowModal] = useState(false);
@@ -38,6 +39,7 @@ export default function Challenges() {
   const [editPenaltyAmount, setEditPenaltyAmount] = useState('');
   const [editIcon, setEditIcon] = useState('🎯');
   const [editWhyStarted, setEditWhyStarted] = useState('');
+  const [editDurationDays, setEditDurationDays] = useState('21');
 
   const emojiOptions = ['🎯', '📚', '🙏', '☀️', '⏰', '💪', '🏃‍♂️', '🥦', '💧', '🧘‍♂️', '🚭', '🍎', '💰', '🧠'];
 
@@ -133,6 +135,7 @@ export default function Challenges() {
     setEditPenaltyAmount(c.penaltyAmount?.toString() || '50');
     setEditIcon(c.icon || '🎯');
     setEditWhyStarted(c.whyStarted || '');
+    setEditDurationDays(c.durationDays?.toString() || '21');
   };
 
   const handleEditSubmit = async (e) => {
@@ -149,7 +152,8 @@ export default function Challenges() {
           dailyTarget: editDailyTarget,
           penaltyAmount: parseFloat(editPenaltyAmount || 0),
           icon: editIcon,
-          whyStarted: editWhyStarted
+          whyStarted: editWhyStarted,
+          durationDays: parseInt(editDurationDays, 10)
         })
       });
 
@@ -186,6 +190,12 @@ export default function Challenges() {
             <Plus className="w-3.5 h-3.5" />
             <span>New</span>
           </button>
+          {insights && (
+            <div className="flex items-center gap-1 bg-orange-50 border border-orange-200/50 px-2.5 py-1.5 rounded-full text-orange-700 font-bold font-sans text-xs shadow-sm">
+              <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+              <span>{insights.currentStreak}d</span>
+            </div>
+          )}
           <button 
             onClick={() => setActiveTab('profile')}
             className="w-9 h-9 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
@@ -597,6 +607,23 @@ export default function Challenges() {
                   min="0"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                  Challenge Duration (days)
+                </label>
+                <input
+                  type="number"
+                  value={editDurationDays}
+                  onChange={(e) => setEditDurationDays(e.target.value)}
+                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                  min="1"
+                  required
+                />
+                <span className="text-[10px] text-cream-400 mt-1 block leading-normal ml-1">
+                  Extend duration to add more days to your discipline journey.
+                </span>
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t border-cream-100 mt-6">

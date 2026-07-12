@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, Plus, Check, X, AlertCircle, Calendar, User } from 'lucide-react';
+import { Sparkles, Plus, Check, X, AlertCircle, Calendar, User, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function Today() {
@@ -13,6 +13,7 @@ export default function Today() {
     fetchTodayCheckIns,
     fetchWallet,
     fetchInsights,
+    insights,
     getTodayDateString
   } = useApp();
 
@@ -136,12 +137,20 @@ export default function Today() {
             {dateName}
           </p>
         </div>
-        <button 
-          onClick={() => setActiveTab('profile')}
-          className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
-        >
-          <User className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {insights && (
+            <div className="flex items-center gap-1 bg-orange-50 border border-orange-200/50 px-2.5 py-1.5 rounded-full text-orange-700 font-bold font-sans text-xs shadow-sm">
+              <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+              <span>{insights.currentStreak}d</span>
+            </div>
+          )}
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <User className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Daily Thought / Quote card */}

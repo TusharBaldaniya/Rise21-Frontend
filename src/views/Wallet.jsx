@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Heart, Book, Sparkles, Plus, AlertCircle, User } from 'lucide-react';
+import { Heart, Book, Sparkles, Plus, AlertCircle, User, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function Wallet() {
@@ -10,7 +10,8 @@ export default function Wallet() {
     fetchWallet,
     fetchInsights,
     getTodayDateString,
-    setActiveTab
+    setActiveTab,
+    insights
   } = useApp();
 
   const [category, setCategory] = useState('Charity'); // 'Charity' | 'Books' | 'Help' | 'Custom'
@@ -95,12 +96,20 @@ export default function Wallet() {
             Turn slip-ups into good deeds.
           </p>
         </div>
-        <button 
-          onClick={() => setActiveTab('profile')}
-          className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
-        >
-          <User className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {insights && (
+            <div className="flex items-center gap-1 bg-orange-50 border border-orange-200/50 px-2.5 py-1.5 rounded-full text-orange-700 font-bold font-sans text-xs shadow-sm">
+              <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+              <span>{insights.currentStreak}d</span>
+            </div>
+          )}
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <User className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Accountability Balance Card - Matching mockup banner */}
@@ -255,7 +264,7 @@ export default function Wallet() {
             No accountability charges yet. Keep it up.
           </p>
         ) : (
-          <div className="space-y-3 pr-1">
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
             {wallet.transactions.map(t => {
               const formattedDate = new Date(t.date).toLocaleDateString('en-US', {
                 month: 'short',

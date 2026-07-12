@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Award, Flame, Target, DollarSign, Calendar, TrendingUp, User, Smile } from 'lucide-react';
+import Monthly from './Monthly';
 
 export default function Insights() {
   const { insights, setActiveTab } = useApp();
+  const [subTab, setSubTab] = useState('overview'); // 'overview' | 'monthly'
 
   if (!insights) {
     return (
@@ -39,49 +41,85 @@ export default function Insights() {
             Your discipline, in numbers.
           </p>
         </div>
-        <button 
-          onClick={() => setActiveTab('profile')}
-          className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
-        >
-          <User className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {insights && (
+            <div className="flex items-center gap-1 bg-orange-50 border border-orange-200/50 px-2.5 py-1.5 rounded-full text-orange-700 font-bold font-sans text-xs shadow-sm">
+              <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+              <span>{insights.currentStreak}d</span>
+            </div>
+          )}
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <User className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Achievement Rank Level Banner Card */}
-      <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
-        <div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider opacity-90 block mb-1">
-            Current Discipline Rank
-          </span>
-          <h2 className="font-serif text-2xl font-bold tracking-tight flex items-center gap-1.5">
+    {/* Sub-Tab Selector Overview vs Monthly */}
+    <div className="flex bg-cream-50 border border-cream-150 p-1 rounded-2xl mb-6 font-sans">
+      <button
+        onClick={() => setSubTab('overview')}
+        className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+          subTab === 'overview'
+            ? 'bg-sage-500 text-white shadow-sm'
+            : 'text-cream-600 hover:bg-cream-100/50'
+        }`}
+      >
+        Overview
+      </button>
+      <button
+        onClick={() => setSubTab('monthly')}
+        className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+          subTab === 'monthly'
+            ? 'bg-sage-500 text-white shadow-sm'
+            : 'text-cream-600 hover:bg-cream-100/50'
+        }`}
+      >
+        Monthly Log
+      </button>
+    </div>
+
+    {subTab === 'monthly' ? (
+      <Monthly />
+    ) : (
+      <>
+        {/* Achievement Rank Level Banner Card */}
+        <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-90 block mb-1">
+              Current Discipline Rank
+            </span>
+            <h2 className="font-serif text-2xl font-bold tracking-tight flex items-center gap-1.5">
+              {insights.bestStreak >= 15 
+                ? '👑 Master' 
+                : insights.bestStreak >= 8 
+                ? '⚔️ Disciplined' 
+                : insights.bestStreak >= 4 
+                ? '🔥 Consistent' 
+                : '🌱 Beginner'}
+            </h2>
+            <p className="text-[10px] opacity-90 mt-1 font-sans">
+              {insights.bestStreak >= 15 
+                ? 'Incredible! You have mastered self-control.' 
+                : insights.bestStreak >= 8 
+                ? 'Keep going! Master rank unlocks at a 15-day streak.' 
+                : insights.bestStreak >= 4 
+                ? 'Great consistency! Disciplined rank unlocks at 8 days.' 
+                : 'Maintain a 4-day streak to unlock Consistent rank!'}
+            </p>
+          </div>
+          <div className="bg-white/15 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
             {insights.bestStreak >= 15 
-              ? '👑 Master' 
+              ? '👑' 
               : insights.bestStreak >= 8 
-              ? '⚔️ Disciplined' 
+              ? '⚔️' 
               : insights.bestStreak >= 4 
-              ? '🔥 Consistent' 
-              : '🌱 Beginner'}
-          </h2>
-          <p className="text-[10px] opacity-90 mt-1 font-sans">
-            {insights.bestStreak >= 15 
-              ? 'Incredible! You have mastered self-control.' 
-              : insights.bestStreak >= 8 
-              ? 'Keep going! Master rank unlocks at a 15-day streak.' 
-              : insights.bestStreak >= 4 
-              ? 'Great consistency! Disciplined rank unlocks at 8 days.' 
-              : 'Maintain a 4-day streak to unlock Consistent rank!'}
-          </p>
+              ? '🔥' 
+              : '🌱'}
+          </div>
         </div>
-        <div className="bg-white/15 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
-          {insights.bestStreak >= 15 
-            ? '👑' 
-            : insights.bestStreak >= 8 
-            ? '⚔️' 
-            : insights.bestStreak >= 4 
-            ? '🔥' 
-            : '🌱'}
-        </div>
-      </div>
 
       {/* 4 Stat Boxes Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -289,7 +327,8 @@ export default function Insights() {
           </div>
         )}
       </div>
-
-    </div>
-  );
+      </>
+    )}
+  </div>
+);
 }
