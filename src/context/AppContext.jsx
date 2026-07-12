@@ -219,6 +219,20 @@ export function AppProvider({ children }) {
     }
   };
 
+  const refreshData = async () => {
+    if (!token) return;
+    try {
+      await Promise.all([
+        fetchChallenges(),
+        fetchWallet(),
+        fetchTodayCheckIns(),
+        fetchInsights()
+      ]);
+    } catch (err) {
+      console.error('Error refreshing data:', err);
+    }
+  };
+
   // Auto load user session details
   useEffect(() => {
     if (token) {
@@ -401,7 +415,8 @@ export function AppProvider({ children }) {
       inAppToast,
       setInAppToast,
       updateReminderSettings,
-      sendTestNotification
+      sendTestNotification,
+      refreshData
     }}>
       {children}
     </AppContext.Provider>
