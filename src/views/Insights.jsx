@@ -7,9 +7,6 @@ export default function Insights() {
   const { insights, setActiveTab } = useApp();
   const [subTab, setSubTab] = useState('overview'); // 'overview' | 'monthly'
 
-  const containerRef = useRef(null);
-  const isScrollingRef = useRef(false);
-
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
   const touchEndX = useRef(null);
@@ -43,9 +40,9 @@ export default function Insights() {
 
     if (Math.abs(diffX) > thresholdX && Math.abs(diffX) > Math.abs(diffY) * ratio) {
       if (diffX < 0) {
-        scrollToTab('monthly');
+        setSubTab('monthly');
       } else {
-        scrollToTab('overview');
+        setSubTab('overview');
       }
     }
 
@@ -58,18 +55,6 @@ export default function Insights() {
 
   const scrollToTab = (tab) => {
     setSubTab(tab);
-    const container = containerRef.current;
-    if (container) {
-      const width = container.clientWidth;
-      isScrollingRef.current = true;
-      container.scrollTo({
-        left: tab === 'overview' ? 0 : width,
-        behavior: 'smooth'
-      });
-      setTimeout(() => {
-        isScrollingRef.current = false;
-      }, 350);
-    }
   };
 
   if (!insights) {
@@ -154,15 +139,17 @@ export default function Insights() {
     `}</style>
 
     <div 
-      ref={containerRef}
+      className="flex-1 w-full overflow-hidden pb-10"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="flex-1 flex items-start overflow-x-hidden scroll-smooth w-full no-scrollbar pb-10"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
-      {/* Slide 1: Overview */}
-      <div className="w-full shrink-0 snap-start snap-always px-0.5">
+      <div 
+        className="w-[200%] flex items-start transition-transform duration-300 ease-out"
+        style={{ transform: subTab === 'overview' ? 'translateX(0)' : 'translateX(-50%)' }}
+      >
+        {/* Slide 1: Overview */}
+        <div className="w-1/2 shrink-0 px-0.5">
         {/* Achievement Rank Level Banner Card */}
         <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
           <div>
@@ -403,9 +390,10 @@ export default function Insights() {
         </div>
       </div>
 
-      {/* Slide 2: Monthly Log */}
-      <div className="w-full shrink-0 snap-start snap-always px-0.5">
-        <Monthly />
+        {/* Slide 2: Monthly Log */}
+        <div className="w-1/2 shrink-0 px-0.5">
+          <Monthly />
+        </div>
       </div>
     </div>
   </div>
