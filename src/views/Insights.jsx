@@ -7,52 +7,6 @@ export default function Insights() {
   const { insights, setActiveTab } = useApp();
   const [subTab, setSubTab] = useState('overview'); // 'overview' | 'monthly'
 
-  const touchStartX = useRef(null);
-  const touchStartY = useRef(null);
-  const touchEndX = useRef(null);
-  const touchEndY = useRef(null);
-
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = () => {
-    if (
-      touchStartX.current === null ||
-      touchStartY.current === null ||
-      touchEndX.current === null ||
-      touchEndY.current === null
-    ) {
-      return;
-    }
-
-    const diffX = touchEndX.current - touchStartX.current;
-    const diffY = touchEndY.current - touchStartY.current;
-
-    const thresholdX = 55; // minimum horizontal swipe distance (px)
-    const ratio = 1.5; // X distance must be at least 1.5x of Y drift
-
-    if (Math.abs(diffX) > thresholdX && Math.abs(diffX) > Math.abs(diffY) * ratio) {
-      if (diffX < 0) {
-        setSubTab('monthly');
-      } else {
-        setSubTab('overview');
-      }
-    }
-
-    // Reset coordinates
-    touchStartX.current = null;
-    touchStartY.current = null;
-    touchEndX.current = null;
-    touchEndY.current = null;
-  };
-
   const scrollToTab = (tab) => {
     setSubTab(tab);
   };
@@ -131,25 +85,9 @@ export default function Insights() {
       </button>
     </div>
 
-    {/* CSS Stylesheet wrapper to hide horizontal scrollbar indicator lines */}
-    <style>{`
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-    `}</style>
-
-    <div 
-      className="flex-1 w-full overflow-hidden pb-10"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div 
-        className="w-[200%] flex items-start transition-transform duration-300 ease-out"
-        style={{ transform: subTab === 'overview' ? 'translateX(0)' : 'translateX(-50%)' }}
-      >
-        {/* Slide 1: Overview */}
-        <div className="w-1/2 shrink-0 px-0.5">
+    <div className="flex-1 w-full pb-10">
+      {subTab === 'overview' ? (
+        <div className="w-full px-0.5">
         {/* Achievement Rank Level Banner Card */}
         <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
           <div>
@@ -389,12 +327,11 @@ export default function Insights() {
           )}
         </div>
       </div>
-
-        {/* Slide 2: Monthly Log */}
-        <div className="w-1/2 shrink-0 px-0.5">
+      ) : (
+        <div className="w-full px-0.5">
           <Monthly />
         </div>
-      </div>
+      )}
     </div>
   </div>
 );
