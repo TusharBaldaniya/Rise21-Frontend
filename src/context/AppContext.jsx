@@ -588,8 +588,7 @@ export function AppProvider({ children }) {
 
   const fetchDailyQuote = async () => {
     try {
-      const url = `${API_BASE}/api/quote`;
-      const data = await fetch(url).then(r => r.json());
+      const data = await apiFetch('/api/quote');
       setDailyQuote(data);
     } catch (err) {
       console.error('Fetch quote error:', err);
