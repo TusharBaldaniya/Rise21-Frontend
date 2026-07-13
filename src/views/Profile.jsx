@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { User, LogOut, Calendar, Shield, Award, Sparkles, Smartphone, Download, Bell } from 'lucide-react';
+import { User, LogOut, Calendar, Shield, Award, Sparkles, Smartphone, Download, Bell, RefreshCw } from 'lucide-react';
 
 export default function Profile() {
   const {
@@ -18,7 +18,8 @@ export default function Profile() {
     remindersEnabled,
     reminderTime,
     updateReminderSettings,
-    sendTestNotification
+    sendTestNotification,
+    restartSession
   } = useApp();
 
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState(
@@ -364,6 +365,66 @@ export default function Profile() {
               ℹ️ Your device does not support native push notifications in this browser.
             </p>
           )}
+        </div>
+      </div>
+
+      {/* 🔄 Restart Goal Settings Card */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
+          <RefreshCw className="w-4 h-4 text-sage-500" />
+          <span>Restart Rise21 Goal</span>
+        </h3>
+
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-cream-600 leading-relaxed">
+            Fell off track or want a clean slate? You can restart your Rise21 challenge. This will reset your active streaks, rank, and achievements, but keep all historical monthly logs.
+          </p>
+
+          {/* Session restart logs history list */}
+          <div className="bg-cream-50/50 border border-cream-150 rounded-2xl p-4 space-y-2">
+            <span className="text-[10px] text-cream-500 font-bold uppercase tracking-wider block">
+              Session Restart Timeline
+            </span>
+            <div className="space-y-1.5 pt-1 text-sage-800 font-medium">
+              <div className="flex justify-between items-center text-[11px] border-b border-cream-100/50 pb-1">
+                <span className="text-cream-500">🏁 Joined Account:</span>
+                <span className="font-mono">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                </span>
+              </div>
+              {(() => {
+                let restartsList = [];
+                try {
+                  restartsList = user?.restarts ? JSON.parse(user.restarts) : [];
+                } catch (e) {
+                  restartsList = [];
+                }
+                return restartsList.map((dateStr, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-[11px] border-b border-cream-100/50 pb-1 last:border-0 last:pb-0">
+                    <span className="text-rose-500 flex items-center gap-1">🔄 Session Restart #{idx + 1}:</span>
+                    <span className="font-mono">
+                      {new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              const confirmRestart = window.confirm(
+                "Are you sure you want to restart your Rise21 challenge? This will reset your current streak, achievements, and discipline rank. Your historical monthly logs will be preserved."
+              );
+              if (confirmRestart) {
+                restartSession();
+              }
+            }}
+            className="w-full bg-rose-50 hover:bg-rose-100/80 text-rose-600 border border-rose-100 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Restart Goal Session</span>
+          </button>
         </div>
       </div>
 

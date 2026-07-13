@@ -620,6 +620,32 @@ export function AppProvider({ children }) {
     }
   };
 
+  const restartSession = async () => {
+    if (!token) return;
+    try {
+      const todayStr = getTodayDateString();
+      const updatedUser = await apiFetch('/api/auth/restart', {
+        method: 'POST',
+        body: JSON.stringify({ date: todayStr })
+      });
+      setUser(updatedUser);
+      localStorage.setItem('sadhna_user', JSON.stringify(updatedUser));
+      
+      // Update caches to sync immediately
+      localStorage.setItem('cache_/api/auth/me', JSON.stringify(updatedUser));
+      
+      await refreshData();
+      
+      setInAppToast({
+        show: true,
+        message: 'Goal restarted successfully! Streaks reset. 🎯'
+      });
+    } catch (err) {
+      console.error('Failed to restart session:', err);
+      alert('Could not restart challenge: ' + err.message);
+    }
+  };
+
   // Auto load user session details
   useEffect(() => {
     if (token) {
@@ -860,7 +886,8 @@ export function AppProvider({ children }) {
       updateReminderSettings,
       sendTestNotification,
       refreshData,
-      isOnline
+      isOnline,
+      restartSession
     }}>
       {children}
     </AppContext.Provider>

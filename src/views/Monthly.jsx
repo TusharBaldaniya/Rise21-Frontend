@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Calendar, ChevronLeft, ChevronRight, Check, X, RefreshCw, AlertCircle, TrendingUp } from 'lucide-react';
 
 export default function Monthly() {
-  const { challenges, apiFetch, refreshData } = useApp();
+  const { challenges, apiFetch, refreshData, user } = useApp();
   
   // Current Date defaults
   const today = new Date();
@@ -40,6 +40,19 @@ export default function Monthly() {
 
   const daysCount = getDaysInMonth(selectedYear, selectedMonth);
   const datesArray = Array.from({ length: daysCount }, (_, i) => i + 1);
+
+  const restarts = React.useMemo(() => {
+    try {
+      return user?.restarts ? JSON.parse(user.restarts) : [];
+    } catch (e) {
+      return [];
+    }
+  }, [user?.restarts]);
+
+  const getIsRestartDay = (day) => {
+    const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return restarts.includes(dateStr);
+  };
 
   const fetchMonthlyCheckins = async () => {
     setLoading(true);
@@ -238,11 +251,19 @@ export default function Monthly() {
                     <th className="bg-cream-50 border-r border-cream-150 p-2.5 w-[110px] min-w-[110px] text-[9px]">
                       Challenge
                     </th>
-                    {datesArray.map(day => (
-                      <th key={day} className="p-2 border-r border-cream-150 text-center w-9 min-w-[36px]">
-                        {day}
-                      </th>
-                    ))}
+                    {datesArray.map(day => {
+                      const isRestart = getIsRestartDay(day);
+                      return (
+                        <th 
+                          key={day} 
+                          className={`p-2 border-r border-cream-150 text-center w-9 min-w-[36px] ${
+                            isRestart ? 'border-l-2 border-l-rose-500 font-extrabold bg-rose-50/50 text-rose-700' : ''
+                          }`}
+                        >
+                          {day}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -255,6 +276,7 @@ export default function Monthly() {
                       {datesArray.map(day => {
                         const cell = getCellStatus(ch.id, day);
                         const inRange = isDateInChallengeRange(ch, day);
+                        const isRestart = getIsRestartDay(day);
                         return (
                           <td 
                             key={day}
@@ -263,6 +285,8 @@ export default function Monthly() {
                               inRange 
                                 ? 'cursor-pointer hover:bg-cream-50 active:scale-95' 
                                 : 'bg-gray-100 text-gray-400/60 cursor-not-allowed'
+                            } ${
+                              isRestart ? 'border-l-2 border-l-rose-500 bg-rose-50/20' : ''
                             }`}
                           >
                             <div className="w-full h-full flex items-center justify-center rounded-lg">
