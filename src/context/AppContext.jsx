@@ -39,6 +39,9 @@ export function AppProvider({ children }) {
   });
   const [inAppToast, setInAppToast] = useState({ show: false, message: '' });
 
+  // Online/Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   // Handle PWA installation prompts
   useEffect(() => {
     const handleBeforeInstall = (e) => {
@@ -47,7 +50,12 @@ export function AppProvider({ children }) {
       setIsInstallable(true);
     };
 
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     // Detect iOS
     const userAgent = window.navigator.userAgent || '';
@@ -60,6 +68,8 @@ export function AppProvider({ children }) {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -75,8 +85,251 @@ export function AppProvider({ children }) {
   // Base API URL configuration for deployments
   const API_BASE = import.meta.env.VITE_API_URL || '';
 
-  // Fetch helper with auth headers
-  const apiFetch = async (url, options = {}) => {
+  // Patch local caches for offline modifications
+  const patchLocalCache = (url, method, body) => {
+    try {
+      console.log(`Patching cache offline for ${method} ${url}`, body);
+      
+      // 1. Check-in updates: POST /api/checkins
+      if (url === '/api/checkins' && method === 'POST') {
+        const { challengeId, date, status, reason } = body;
+        const cacheKey = `cache_/api/checkins/date/${date}`;
+        const cached = localStorage.getItem(cacheKey);
+        const list = cached ? JSON.parse(cached) : [];
+        
+        const index = list.findIndex(c => c.challengeId === challengeId);
+        
+        let challengePenalty = 50;
+        const challengesCached = localStorage.getItem('cache_/api/challenges');
+        if (challengesCached) {
+          const challengesList = JSON.parse(challengesCached);
+          const foundCh = challengesList.find(c => c.id === challengeId);
+          if (foundCh) {
+            challengePenalty = foundCh.penaltyAmount || 0;
+          }
+        }
+
+        const newCheckIn = {
+          id: 'temp-' + Date.now(),
+          challengeId,
+          date,
+          status,
+          reason,
+          penaltyCharged: status === 'missed' ? challengePenalty : 0,
+          createdAt: new Date().toISOString()
+        };
+
+        if (index > -1) {
+          list[index] = newCheckIn;
+        } else {
+          list.push(newCheckIn);
+        }
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+
+        if (status === 'missed') {
+          const walletCached = localStorage.getItem('cache_/api/wallet');
+          if (walletCached) {
+            const walletObj = JSON.parse(walletCached);
+            walletObj.balance = Math.max(0, walletObj.balance - challengePenalty);
+            walletObj.transactions.unshift({
+              id: 'temp-t-' + Date.now(),
+              date,
+              type: 'charge',
+              amount: challengePenalty,
+              category: 'Challenge Penalty',
+              description: `Penalty for missing challenge`,
+              createdAt: new Date().toISOString()
+            });
+            localStorage.setItem('cache_/api/wallet', JSON.stringify(walletObj));
+          }
+        }
+      }
+
+      // 2. New Challenge: POST /api/challenges
+      if (url === '/api/challenges' && method === 'POST') {
+        const cacheKey = 'cache_/api/challenges';
+        const cached = localStorage.getItem(cacheKey);
+        const list = cached ? JSON.parse(cached) : [];
+        list.push({
+          id: 'temp-c-' + Date.now(),
+          title: body.title,
+          description: body.description,
+          startDate: body.startDate,
+          endDate: body.endDate,
+          durationDays: body.durationDays,
+          dailyTarget: body.dailyTarget,
+          penaltyAmount: body.penaltyAmount,
+          icon: body.icon || '🎯',
+          whyStarted: body.whyStarted,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          checkIns: []
+        });
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+      }
+
+      // 3. Edit Challenge: PUT /api/challenges/:id
+      if (url.startsWith('/api/challenges/') && method === 'PUT' && !url.endsWith('/archive')) {
+        const chId = url.split('/').pop();
+        const cacheKey = 'cache_/api/challenges';
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const list = JSON.parse(cached);
+          const index = list.findIndex(c => c.id === chId);
+          if (index > -1) {
+            list[index] = {
+              ...list[index],
+              title: body.title !== undefined ? body.title : list[index].title,
+              description: body.description !== undefined ? body.description : list[index].description,
+              dailyTarget: body.dailyTarget !== undefined ? body.dailyTarget : list[index].dailyTarget,
+              penaltyAmount: body.penaltyAmount !== undefined ? body.penaltyAmount : list[index].penaltyAmount,
+              icon: body.icon !== undefined ? body.icon : list[index].icon,
+              whyStarted: body.whyStarted !== undefined ? body.whyStarted : list[index].whyStarted,
+              durationDays: body.durationDays !== undefined ? body.durationDays : list[index].durationDays
+            };
+            localStorage.setItem(cacheKey, JSON.stringify(list));
+          }
+        }
+      }
+
+      // 4. Archive Challenge: PUT /api/challenges/:id/archive
+      if (url.startsWith('/api/challenges/') && method === 'PUT' && url.endsWith('/archive')) {
+        const parts = url.split('/');
+        const chId = parts[parts.length - 2];
+        const cacheKey = 'cache_/api/challenges';
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const list = JSON.parse(cached);
+          const index = list.findIndex(c => c.id === chId);
+          if (index > -1) {
+            list[index].isActive = false;
+            localStorage.setItem(cacheKey, JSON.stringify(list));
+          }
+        }
+      }
+
+      // 5. Delete Challenge: DELETE /api/challenges/:id
+      if (url.startsWith('/api/challenges/') && method === 'DELETE') {
+        const chId = url.split('/').pop();
+        const cacheKey = 'cache_/api/challenges';
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const list = JSON.parse(cached);
+          const filtered = list.filter(c => c.id !== chId);
+          localStorage.setItem(cacheKey, JSON.stringify(filtered));
+        }
+      }
+
+      // 6. Log Mind Check Trigger: POST /api/journal/mindcheck
+      if (url === '/api/journal/mindcheck' && method === 'POST') {
+        const { date, triggerName, penaltyAmount } = body;
+        const cacheKey = `cache_/api/journal/mindcheck/${date}`;
+        const cached = localStorage.getItem(cacheKey);
+        const list = cached ? JSON.parse(cached) : [];
+        list.push({
+          id: 'temp-m-' + Date.now(),
+          date,
+          triggerName,
+          penaltyAmount,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+
+        const walletCached = localStorage.getItem('cache_/api/wallet');
+        if (walletCached) {
+          const walletObj = JSON.parse(walletCached);
+          walletObj.balance = Math.max(0, walletObj.balance - penaltyAmount);
+          walletObj.transactions.unshift({
+            id: 'temp-t-' + Date.now(),
+            date,
+            type: 'charge',
+            amount: penaltyAmount,
+            category: 'Mind Check Trigger',
+            description: `Mind check trigger: ${triggerName}`,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('cache_/api/wallet', JSON.stringify(walletObj));
+        }
+      }
+
+      // 7. Delete Mind Check Log: DELETE /api/journal/mindcheck/:id
+      if (url.startsWith('/api/journal/mindcheck/') && method === 'DELETE') {
+        const logId = url.split('/').pop();
+        const date = new Date().toISOString().split('T')[0];
+        const cacheKey = `cache_/api/journal/mindcheck/${date}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const list = JSON.parse(cached);
+          const found = list.find(l => l.id === logId);
+          if (found) {
+            const filtered = list.filter(l => l.id !== logId);
+            localStorage.setItem(cacheKey, JSON.stringify(filtered));
+            
+            const walletCached = localStorage.getItem('cache_/api/wallet');
+            if (walletCached) {
+              const walletObj = JSON.parse(walletCached);
+              walletObj.balance += found.penaltyAmount;
+              walletObj.transactions = walletObj.transactions.filter(t => !t.id.includes(logId));
+              localStorage.setItem('cache_/api/wallet', JSON.stringify(walletObj));
+            }
+          }
+        }
+      }
+
+      // 8. Submit Journal Reflection: POST /api/journal/reflection
+      if (url === '/api/journal/reflection' && method === 'POST') {
+        const { date, goodThing, mistake, improvement, gratitude, mood } = body;
+        const cacheKeySingle = `cache_/api/journal/reflection/${date}`;
+        const reflectionData = {
+          id: 'temp-r-' + Date.now(),
+          date,
+          goodThing,
+          mistake,
+          improvement,
+          gratitude,
+          mood,
+          createdAt: new Date().toISOString()
+        };
+        localStorage.setItem(cacheKeySingle, JSON.stringify(reflectionData));
+
+        const cacheKeyHistory = 'cache_/api/journal/reflection';
+        const cachedHistory = localStorage.getItem(cacheKeyHistory);
+        const list = cachedHistory ? JSON.parse(cachedHistory) : [];
+        const todayIndex = list.findIndex(r => r.date === date);
+        if (todayIndex > -1) {
+          list[todayIndex] = reflectionData;
+        } else {
+          list.unshift(reflectionData);
+        }
+        localStorage.setItem(cacheKeyHistory, JSON.stringify(list));
+      }
+
+      // 9. Add Selfie: POST /api/selfies
+      if (url === '/api/selfies' && method === 'POST') {
+        const { date, imageBlob } = body;
+        const cacheKey = 'cache_/api/selfies';
+        const cached = localStorage.getItem(cacheKey);
+        const list = cached ? JSON.parse(cached) : [];
+        const index = list.findIndex(s => s.date === date);
+        const newSelfie = {
+          id: 'temp-s-' + Date.now(),
+          date,
+          imageBlob,
+          createdAt: new Date().toISOString()
+        };
+        if (index > -1) {
+          list[index] = newSelfie;
+        } else {
+          list.unshift(newSelfie);
+        }
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+      }
+    } catch (e) {
+      console.error('Error patching local storage cache:', e);
+    }
+  };
+
+  const apiFetchRaw = async (url, options = {}) => {
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -90,6 +343,141 @@ export function AppProvider({ children }) {
       throw new Error(data.error || 'API Request Failed');
     }
     return res.json();
+  };
+
+  const apiFetch = async (url, options = {}) => {
+    const method = options.method || 'GET';
+    const isGet = method === 'GET';
+    const cacheKey = `cache_${url}`;
+
+    // If browser navigator is offline
+    if (!navigator.onLine) {
+      if (isGet) {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          console.log(`Offline: serving cached GET for ${url}`);
+          return JSON.parse(cached);
+        }
+        throw new Error('You are offline, and this resource is not cached.');
+      } else {
+        console.log(`Offline: queueing mutation ${method} for ${url}`);
+        const queueKey = 'sadhna_sync_queue';
+        const savedQueue = localStorage.getItem(queueKey);
+        const queue = savedQueue ? JSON.parse(savedQueue) : [];
+        
+        queue.push({
+          id: 'q-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+          url,
+          options,
+          timestamp: Date.now()
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+
+        const parsedBody = options.body ? JSON.parse(options.body) : {};
+        patchLocalCache(url, method, parsedBody);
+
+        setInAppToast({
+          show: true,
+          message: 'Saved changes offline. Will sync when online! 📴'
+        });
+
+        return { success: true, offline: true };
+      }
+    }
+
+    try {
+      const data = await apiFetchRaw(url, options);
+      if (isGet) {
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      }
+      return data;
+    } catch (err) {
+      const isNetworkError = err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('load');
+      
+      if (isNetworkError) {
+        if (isGet) {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            console.log(`Fetch failed: serving cached GET for ${url}`);
+            return JSON.parse(cached);
+          }
+        } else {
+          console.log(`Mutation fetch failed: queueing ${method} for ${url}`);
+          const queueKey = 'sadhna_sync_queue';
+          const savedQueue = localStorage.getItem(queueKey);
+          const queue = savedQueue ? JSON.parse(savedQueue) : [];
+          
+          queue.push({
+            id: 'q-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            url,
+            options,
+            timestamp: Date.now()
+          });
+          localStorage.setItem(queueKey, JSON.stringify(queue));
+
+          const parsedBody = options.body ? JSON.parse(options.body) : {};
+          patchLocalCache(url, method, parsedBody);
+
+          setInAppToast({
+            show: true,
+            message: 'Saved changes offline. Will sync when online! 📴'
+          });
+
+          return { success: true, offline: true };
+        }
+      }
+      throw err;
+    }
+  };
+
+  const syncQueue = async () => {
+    if (!navigator.onLine) return;
+    const queueKey = 'sadhna_sync_queue';
+    const savedQueue = localStorage.getItem(queueKey);
+    if (!savedQueue) return;
+    
+    try {
+      const queue = JSON.parse(savedQueue);
+      if (queue.length === 0) return;
+
+      console.log(`Syncing ${queue.length} offline actions...`);
+      setInAppToast({ show: true, message: `Syncing ${queue.length} offline changes... 🔄` });
+
+      const failedItems = [];
+      for (const item of queue) {
+        try {
+          await apiFetchRaw(item.url, item.options);
+        } catch (err) {
+          console.error(`Failed to sync queued request: ${item.url}`, err);
+          failedItems.push(item);
+        }
+      }
+
+      if (failedItems.length > 0) {
+        localStorage.setItem(queueKey, JSON.stringify(failedItems));
+        setInAppToast({
+          show: true,
+          message: `Failed to sync ${failedItems.length} changes. Will retry. ⚠️`
+        });
+      } else {
+        localStorage.removeItem(queueKey);
+        setInAppToast({
+          show: true,
+          message: 'All offline changes synced successfully! 🎉'
+        });
+
+        // Force clean local caches
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('cache_/api/')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        await refreshData();
+      }
+    } catch (e) {
+      console.error('Error during queue synchronization:', e);
+    }
   };
 
   // Auth Operations
@@ -279,6 +667,13 @@ export function AppProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Sync offline queue when online
+  useEffect(() => {
+    if (isOnline && token) {
+      syncQueue();
+    }
+  }, [isOnline, token]);
+
   const updateReminderSettings = (enabled, time) => {
     setRemindersEnabled(enabled);
     setReminderTime(time);
@@ -298,9 +693,21 @@ export function AppProvider({ children }) {
       return;
     }
     
+    const motivationalMessages = [
+      "Discipline is choosing between what you want now and what you want most. 🎯",
+      "A 21-day challenge is won day by day. Check in today! 💪",
+      "Your streak is waiting for you. Let's make today count! ✨",
+      "Do not break the chain! Consistency is the key to mastery. 🔥",
+      "Every small action builds your character. Keep going! 🚀",
+      "Sadhna is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
+      "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
+      "The only bad check-in is the one that didn't happen. Check in now! ⏰"
+    ];
+
     const trigger = () => {
+      const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
       new Notification('Sadhna Habit Reminder 🎯', {
-        body: 'This is a test notification. Daily reminders are working!',
+        body: `Test: ${randomQuote}`,
         icon: '/Rise21.png',
         badge: '/Rise21.png'
       });
@@ -328,7 +735,7 @@ export function AppProvider({ children }) {
     }
   }, [inAppToast.show]);
 
-  // Periodic Daily Reminder Check
+  // Periodic Daily Reminder & Morning Nudge Check
   useEffect(() => {
     if (!remindersEnabled || !token) return;
 
@@ -340,9 +747,44 @@ export function AppProvider({ children }) {
       const currentHours = String(now.getHours()).padStart(2, '0');
       const currentMinutes = String(now.getMinutes()).padStart(2, '0');
       const currentTimeStr = `${currentHours}:${currentMinutes}`;
+      const todayStr = getTodayDateString();
 
+      // Curated motivational messages
+      const motivationalMessages = [
+        "Discipline is choosing between what you want now and what you want most. 🎯",
+        "A 21-day challenge is won day by day. Check in today! 💪",
+        "Your streak is waiting for you. Let's make today count! ✨",
+        "Do not break the chain! Consistency is the key to mastery. 🔥",
+        "Every small action builds your character. Keep going! 🚀",
+        "Sadhna is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
+        "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
+        "The only bad check-in is the one that didn't happen. Check in now! ⏰",
+        "Discipline beats motivation every single time. Open Rise21 to check in! 💪"
+      ];
+
+      // 1. Morning Nudge (09:00 AM)
+      if (currentTimeStr === '09:00') {
+        const lastMorningNotified = localStorage.getItem('sadhna_last_morning_notified_date');
+        if (lastMorningNotified !== todayStr) {
+          const activeChallenges = challenges.filter(c => c.isActive);
+          if (activeChallenges.length > 0) {
+            const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            try {
+              new Notification('Morning Rise21 Nudge ☀️', {
+                body: randomQuote,
+                icon: '/Rise21.png',
+                badge: '/Rise21.png'
+              });
+            } catch (err) {
+              console.error('Failed to trigger morning nudge:', err);
+            }
+            localStorage.setItem('sadhna_last_morning_notified_date', todayStr);
+          }
+        }
+      }
+
+      // 2. Evening Check-In (set by user)
       if (currentTimeStr === reminderTime) {
-        const todayStr = getTodayDateString();
         const lastNotified = localStorage.getItem('sadhna_last_notified_date');
 
         if (lastNotified !== todayStr) {
@@ -354,19 +796,21 @@ export function AppProvider({ children }) {
           }).length;
 
           if (uncheckedCount > 0) {
+            const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            const bodyText = `${randomQuote} You have ${uncheckedCount} challenge${uncheckedCount > 1 ? 's' : ''} left to update today.`;
             try {
               new Notification('Sadhna Habit Reminder 🎯', {
-                body: `You have ${uncheckedCount} active challenge${uncheckedCount > 1 ? 's' : ''} left to update today. Keep your streak alive!`,
+                body: bodyText,
                 icon: '/Rise21.png',
                 badge: '/Rise21.png'
               });
             } catch (err) {
-              console.error('Failed to trigger native notification:', err);
+              console.error('Failed to trigger evening reminder:', err);
             }
 
             setInAppToast({
               show: true,
-              message: `Don't forget to update your ${uncheckedCount} active challenge${uncheckedCount > 1 ? 's' : ''} today! 🎯`
+              message: `Reminder: ${bodyText}`
             });
 
             localStorage.setItem('sadhna_last_notified_date', todayStr);
@@ -416,7 +860,8 @@ export function AppProvider({ children }) {
       setInAppToast,
       updateReminderSettings,
       sendTestNotification,
-      refreshData
+      refreshData,
+      isOnline
     }}>
       {children}
     </AppContext.Provider>

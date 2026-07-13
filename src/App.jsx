@@ -10,7 +10,7 @@ import Profile from './views/Profile';
 import { Home, Target, BookOpen, Wallet as WalletIcon, BarChart2 } from 'lucide-react';
 
 export default function App() {
-  const { token, activeTab, setActiveTab, inAppToast, setInAppToast } = useApp();
+  const { token, activeTab, setActiveTab, inAppToast, setInAppToast, isOnline } = useApp();
 
   // If user is not authenticated, show Auth Page
   if (!token) {
@@ -51,6 +51,13 @@ export default function App() {
       {/* Mobile-first app container with mock device border */}
       <div className="w-full max-w-[420px] h-[100dvh] sm:h-[880px] bg-cream-100 sm:rounded-[40px] sm:border-[8px] sm:border-sage-800 flex flex-col relative shadow-2xl overflow-hidden overscroll-y-contain">
         
+        {/* Offline Mode Banner */}
+        {!isOnline && (
+          <div className="bg-orange-500 text-white text-[10px] py-1 text-center font-semibold font-sans tracking-wide shrink-0 animate-in slide-in-from-top duration-300 z-50 flex items-center justify-center gap-1 shadow-sm">
+            <span>📴</span>
+            <span>Offline Mode — Changes will sync when connected</span>
+          </div>
+        )}
         {/* Global In-App Toast Notification */}
         {inAppToast && inAppToast.show && (
           <div className="absolute top-4 left-4 right-4 z-50 bg-white border border-sage-100 rounded-2xl p-4 shadow-premium flex items-center justify-between animate-in slide-in-from-top duration-300">
