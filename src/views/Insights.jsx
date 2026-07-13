@@ -88,39 +88,142 @@ export default function Insights() {
     <div className="flex-1 w-full pb-10">
       {subTab === 'overview' ? (
         <div className="w-full px-0.5">
-        {/* Achievement Rank Level Banner Card */}
-        <div className="bg-gradient-to-r from-sage-500 to-sage-600 text-white rounded-3xl p-5 shadow-premium mb-6 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider opacity-90 block mb-1">
-              Current Discipline Rank
+        {/* Achievement Rank Level Horizontal Scroll Carousel */}
+        <div className="mb-6 w-full overflow-hidden">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <span className="text-[10px] font-bold text-cream-600 uppercase tracking-wider block">
+              Discipline Rank Gallery
             </span>
-            <h2 className="font-serif text-2xl font-bold tracking-tight flex items-center gap-1.5">
-              {insights.bestStreak >= 15 
-                ? '👑 Master' 
-                : insights.bestStreak >= 8 
-                ? '⚔️ Disciplined' 
-                : insights.bestStreak >= 4 
-                ? '🔥 Consistent' 
-                : '🌱 Beginner'}
-            </h2>
-            <p className="text-[10px] opacity-90 mt-1 font-sans">
-              {insights.bestStreak >= 15 
-                ? 'Incredible! You have mastered self-control.' 
-                : insights.bestStreak >= 8 
-                ? 'Keep going! Master rank unlocks at a 15-day streak.' 
-                : insights.bestStreak >= 4 
-                ? 'Great consistency! Disciplined rank unlocks at 8 days.' 
-                : 'Maintain a 4-day streak to unlock Consistent rank!'}
-            </p>
+            <span className="text-[10px] text-cream-400 font-sans">
+              Swipe to explore ranks →
+            </span>
           </div>
-          <div className="bg-white/15 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
-            {insights.bestStreak >= 15 
-              ? '👑' 
-              : insights.bestStreak >= 8 
-              ? '⚔️' 
-              : insights.bestStreak >= 4 
-              ? '🔥' 
-              : '🌱'}
+
+          <div 
+            className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-3 px-1 scrollbar-none"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            {(() => {
+              const ranks = [
+                {
+                  id: 'beginner',
+                  title: 'Beginner Gem',
+                  description: 'Every great journey starts with a single step. Welcome to Sadhna.',
+                  reqDays: 0,
+                  reqText: 'Always unlocked',
+                  color: 'from-emerald-400 to-teal-500',
+                  shadowColor: 'rgba(16, 185, 129, 0.5)',
+                  ownedRate: '99%'
+                },
+                {
+                  id: 'consistent',
+                  title: 'Consistent Gem',
+                  description: 'A string of focus. Your habits are starting to settle.',
+                  reqDays: 4,
+                  reqText: 'Reach a 4-day active streak',
+                  color: 'from-orange-400 to-amber-500',
+                  shadowColor: 'rgba(245, 158, 11, 0.5)',
+                  ownedRate: '88%'
+                },
+                {
+                  id: 'disciplined',
+                  title: 'Disciplined Gem',
+                  description: 'Forging steel. Consistency is becoming your nature.',
+                  reqDays: 8,
+                  reqText: 'Reach an 8-day active streak',
+                  color: 'from-blue-400 to-indigo-500',
+                  shadowColor: 'rgba(59, 130, 246, 0.5)',
+                  ownedRate: '54%'
+                },
+                {
+                  id: 'master',
+                  title: 'Master Gem',
+                  description: 'Unbreakable focus. You have mastered your daily mind.',
+                  reqDays: 15,
+                  reqText: 'Reach a 15-day active streak',
+                  color: 'from-purple-500 to-pink-500',
+                  shadowColor: 'rgba(168, 85, 247, 0.5)',
+                  ownedRate: '12%'
+                }
+              ];
+
+              return ranks.map((r) => {
+                const isUnlocked = insights.bestStreak >= r.reqDays;
+                return (
+                  <div 
+                    key={r.id}
+                    className="w-[260px] shrink-0 snap-center bg-gradient-to-b from-[#0c0e12] to-[#141820] text-white rounded-3xl p-5 border border-sage-800/10 shadow-xl flex flex-col justify-between relative overflow-hidden"
+                    style={{ minHeight: '320px' }}
+                  >
+                    {/* Cave background light effect */}
+                    <div className="absolute top-[-30px] left-[50%] transform translate-x-[-50%] w-[160px] h-[160px] bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                    {/* Top info */}
+                    <div className="text-center z-10">
+                      <h3 className="font-serif text-sm font-bold tracking-tight">{r.title}</h3>
+                      <p className="text-[9px] text-zinc-400 leading-normal mt-1 px-1">{r.description}</p>
+                      
+                      {/* Owned percentage badge */}
+                      <div className="inline-flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-2 py-0.5 mt-2 text-[8px] text-sky-300 font-sans font-medium">
+                        <span>👥 Owned by {r.ownedRate}</span>
+                      </div>
+                    </div>
+
+                    {/* Center Gem Display */}
+                    <div className="my-5 relative flex flex-col items-center justify-center z-10">
+                      {/* Gem stand shadow */}
+                      <div className="absolute bottom-[-4px] w-16 h-8 bg-black/60 rounded-full blur-sm" />
+
+                      {/* Gem sphere */}
+                      {isUnlocked ? (
+                        <div 
+                          className={`w-16 h-20 rounded-[50%_50%_50%_50%_/_45%_45%_55%_55%] bg-gradient-to-tr ${r.color} shadow-2xl relative animate-pulse flex items-center justify-center`}
+                          style={{
+                            boxShadow: `0 0 25px ${r.shadowColor}, inset 0 -8px 15px rgba(0,0,0,0.4)`,
+                            animationDuration: '3s'
+                          }}
+                        >
+                          {/* Highlighting sheen reflections */}
+                          <div className="absolute top-2 left-3.5 w-3 h-6 bg-white/30 rounded-full rotate-[15deg] blur-[1px]" />
+                          <div className="absolute bottom-2 right-3.5 w-1.5 h-3 bg-white/20 rounded-full rotate-[15deg] blur-[1px]" />
+                        </div>
+                      ) : (
+                        <div 
+                          className="w-16 h-20 rounded-[50%_50%_50%_50%_/_45%_45%_55%_55%] bg-zinc-800/70 border border-zinc-700 relative flex items-center justify-center opacity-60 filter blur-[0.5px]"
+                          style={{
+                            boxShadow: 'inset 0 -8px 15px rgba(0,0,0,0.6)'
+                          }}
+                        >
+                          {/* Lock Icon */}
+                          <span className="text-base">🔒</span>
+                        </div>
+                      )}
+
+                      {/* Stone pedestal stand */}
+                      <div className="w-14 h-2.5 bg-gradient-to-r from-zinc-700 via-zinc-800 to-zinc-700 rounded-md shadow-md border-t border-zinc-600/50 mt-2.5" />
+                    </div>
+
+                    {/* Bottom validation status */}
+                    <div className="text-center z-10 mt-auto">
+                      {isUnlocked ? (
+                        <div className="flex items-center justify-center gap-1.5 text-[9px] text-emerald-400 font-semibold font-sans">
+                          <span>✓ Unlocked</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[8px] text-zinc-500 uppercase font-bold tracking-wider">Milestone</span>
+                          <span className="text-[9px] text-amber-400 font-semibold font-sans">{r.reqText}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
 
