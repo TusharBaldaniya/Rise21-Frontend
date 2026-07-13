@@ -620,13 +620,13 @@ export function AppProvider({ children }) {
     }
   };
 
-  const restartSession = async () => {
+  const restartSession = async (reason) => {
     if (!token) return;
     try {
       const todayStr = getTodayDateString();
       const updatedUser = await apiFetch('/api/auth/restart', {
         method: 'POST',
-        body: JSON.stringify({ date: todayStr })
+        body: JSON.stringify({ date: todayStr, reason })
       });
       setUser(updatedUser);
       localStorage.setItem('sadhna_user', JSON.stringify(updatedUser));
@@ -643,6 +643,117 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.error('Failed to restart session:', err);
       alert('Could not restart challenge: ' + err.message);
+    }
+  };
+
+  const enableBiometrics = async () => {
+    if (!window.PublicKeyCredential) {
+      alert('Biometric authentication is not supported on this browser/device.');
+      return false;
+    }
+
+    try {
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+
+      const userId = new Uint8Array(16);
+      window.crypto.getRandomValues(userId);
+
+      const publicKeyOptions = {
+        challenge,
+        rp: {
+          name: 'Rise21 Sadhna Habit Tracker',
+        },
+        user: {
+          id: userId,
+          name: user?.username || 'user',
+          displayName: user?.name || 'User',
+        },
+        pubKeyCredParams: [
+          { alg: -7, type: 'public-key' },
+          { alg: -257, type: 'public-key' },
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+        },
+        timeout: 60000,
+      };
+
+      const credential = await navigator.credentials.create({
+        publicKey: publicKeyOptions,
+      });
+
+      if (credential) {
+        const credentialIdB64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        localStorage.setItem('sadhna_bio_credential_id', credentialIdB64);
+        localStorage.setItem('sadhna_bio_token', token);
+        
+        setInAppToast({
+          show: true,
+          message: 'Biometric login enabled successfully! 🔒'
+        });
+        return true;
+      }
+    } catch (err) {
+      console.error('Biometric enrollment failed:', err);
+      alert('Failed to enable biometric login: ' + err.message);
+    }
+    return false;
+  };
+
+  const loginWithBiometrics = async () => {
+    if (!window.PublicKeyCredential) {
+      alert('Biometrics not supported.');
+      return;
+    }
+
+    const credentialIdB64 = localStorage.getItem('sadhna_bio_credential_id');
+    const bioToken = localStorage.getItem('sadhna_bio_token');
+    if (!credentialIdB64 || !bioToken) {
+      alert('Biometric login is not set up yet. Please log in with password first.');
+      return;
+    }
+
+    try {
+      const rawId = Uint8Array.from(atob(credentialIdB64), c => c.charCodeAt(0));
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+
+      const publicKeyOptions = {
+        challenge,
+        allowCredentials: [
+          {
+            id: rawId,
+            type: 'public-key',
+          },
+        ],
+        userVerification: 'required',
+        timeout: 60000,
+      };
+
+      const assertion = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
+      });
+
+      if (assertion) {
+        setToken(bioToken);
+        const data = await apiFetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${bioToken}` }
+        });
+        setUser(data);
+        localStorage.setItem('sadhna_token', bioToken);
+        localStorage.setItem('sadhna_user', JSON.stringify(data));
+        setActiveTab('today');
+        
+        setInAppToast({
+          show: true,
+          message: 'Welcome back! Logged in with biometrics 🔓'
+        });
+      }
+    } catch (err) {
+      console.error('Biometric authentication failed:', err);
+      alert('Biometric prompt failed or was cancelled.');
     }
   };
 
@@ -887,7 +998,9 @@ export function AppProvider({ children }) {
       sendTestNotification,
       refreshData,
       isOnline,
-      restartSession
+      restartSession,
+      enableBiometrics,
+      loginWithBiometrics
     }}>
       {children}
     </AppContext.Provider>

@@ -19,7 +19,8 @@ export default function Profile() {
     reminderTime,
     updateReminderSettings,
     sendTestNotification,
-    restartSession
+    restartSession,
+    enableBiometrics
   } = useApp();
 
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState(
@@ -368,6 +369,52 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* 🔒 Biometric FaceID / TouchID Card */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
+          <Shield className="w-4 h-4 text-sage-500" />
+          <span>Biometric Protection</span>
+        </h3>
+
+        <div className="space-y-4 text-xs font-sans">
+          <div className="flex justify-between items-center py-1">
+            <div>
+              <span className="text-cream-700 font-semibold block">Face ID / Touch ID Login</span>
+              <span className="text-[10px] text-cream-400">
+                {localStorage.getItem('sadhna_bio_credential_id') 
+                  ? 'Configured on this device ✓' 
+                  : 'Enroll quick login on this browser'}
+              </span>
+            </div>
+            <button
+              onClick={async () => {
+                if (localStorage.getItem('sadhna_bio_credential_id')) {
+                  if (window.confirm("Do you want to disable biometric login on this browser?")) {
+                    localStorage.removeItem('sadhna_bio_credential_id');
+                    localStorage.removeItem('sadhna_bio_token');
+                    window.location.reload();
+                  }
+                } else {
+                  const enrolled = await enableBiometrics();
+                  if (enrolled) {
+                    window.location.reload();
+                  }
+                }
+              }}
+              className={`w-11 h-6 rounded-full transition-colors relative flex items-center focus:outline-none ${
+                localStorage.getItem('sadhna_bio_credential_id') ? 'bg-sage-500' : 'bg-cream-200'
+              }`}
+            >
+              <div
+                className={`w-4 h-4 bg-white rounded-full absolute transition-transform shadow-sm ${
+                  localStorage.getItem('sadhna_bio_credential_id') ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 🔄 Restart Goal Settings Card */}
       <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
         <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
@@ -395,18 +442,26 @@ export default function Profile() {
               {(() => {
                 let restartsList = [];
                 try {
-                  restartsList = user?.restarts ? JSON.parse(user.restarts) : [];
+                  const parsed = user?.restarts ? JSON.parse(user.restarts) : [];
+                  restartsList = Array.isArray(parsed) ? parsed : [];
                 } catch (e) {
                   restartsList = [];
                 }
-                return restartsList.map((dateStr, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-[11px] border-b border-cream-100/50 pb-1 last:border-0 last:pb-0">
-                    <span className="text-rose-500 flex items-center gap-1">🔄 Session Restart #{idx + 1}:</span>
-                    <span className="font-mono">
-                      {new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  </div>
-                ));
+                return restartsList.map((item, idx) => {
+                  const rDate = typeof item === 'string' ? item : item.date;
+                  const rReason = typeof item === 'string' ? 'Manual Restart' : item.reason;
+                  return (
+                    <div key={idx} className="flex justify-between items-start text-[11px] border-b border-cream-100/50 pb-1.5 pt-0.5 last:border-0 last:pb-0">
+                      <div className="flex flex-col">
+                        <span className="text-rose-600 font-bold flex items-center gap-1">🔄 Restart #{idx + 1}</span>
+                        <span className="text-cream-500 text-[10px] mt-0.5 italic">Reason: "{rReason}"</span>
+                      </div>
+                      <span className="font-mono text-sage-800 font-semibold self-center">
+                        {new Date(rDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  );
+                });
               })()}
             </div>
           </div>
@@ -417,7 +472,10 @@ export default function Profile() {
                 "Are you sure you want to restart your Rise21 challenge? This will reset your current streak, achievements, and discipline rank. Your historical monthly logs will be preserved."
               );
               if (confirmRestart) {
-                restartSession();
+                const reason = window.prompt("Why are you restarting your goal? (Optional — enter a reason):");
+                if (reason !== null) {
+                  restartSession(reason || "Manual Restart");
+                }
               }
             }}
             className="w-full bg-rose-50 hover:bg-rose-100/80 text-rose-600 border border-rose-100 font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"

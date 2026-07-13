@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Eye, EyeOff, Sparkles, User, Lock, Heart } from 'lucide-react';
 
 export default function Auth() {
-  const { login, register, error, setError } = useApp();
+  const { login, register, error, setError, loginWithBiometrics } = useApp();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -123,6 +123,17 @@ export default function Auth() {
               'Create Account'
             )}
           </button>
+
+          {isLogin && !!localStorage.getItem('sadhna_bio_credential_id') && (
+            <button
+              type="button"
+              onClick={loginWithBiometrics}
+              className="w-full bg-cream-50 hover:bg-cream-100/80 text-sage-800 border border-cream-200 font-semibold py-3 rounded-2xl text-xs transition-all shadow-sm mt-3 flex items-center justify-center gap-2 font-sans active:scale-[0.98]"
+            >
+              <span className="text-sm">🔒</span>
+              <span>Sign in with Face ID / Touch ID</span>
+            </button>
+          )}
         </form>
 
         {/* Toggle between register and login */}
