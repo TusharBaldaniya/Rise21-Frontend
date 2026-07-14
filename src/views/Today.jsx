@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Sparkles, Plus, Check, X, AlertCircle, Calendar, User, Flame } from 'lucide-react';
+import { Sparkles, Plus, Check, X, AlertCircle, Calendar, User, Flame, Bell } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function Today() {
@@ -14,7 +14,9 @@ export default function Today() {
     fetchWallet,
     fetchInsights,
     insights,
-    getTodayDateString
+    getTodayDateString,
+    unreadCount,
+    setShowAnnouncementsModal
   } = useApp();
 
   const [excuseModal, setExcuseModal] = useState({ show: false, challenge: null });
@@ -125,7 +127,7 @@ export default function Today() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-6">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-6 pt-6">
       
       {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
@@ -144,6 +146,15 @@ export default function Today() {
               <span>{insights.currentStreak}d</span>
             </div>
           )}
+          <button 
+            onClick={() => setShowAnnouncementsModal(true)}
+            className="relative w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse" />
+            )}
+          </button>
           <button 
             onClick={() => setActiveTab('profile')}
             className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"

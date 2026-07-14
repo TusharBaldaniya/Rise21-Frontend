@@ -7,10 +7,25 @@ import Journal from './views/Journal';
 import Wallet from './views/Wallet';
 import Insights from './views/Insights';
 import Profile from './views/Profile';
-import { Home, Target, BookOpen, Wallet as WalletIcon, BarChart2 } from 'lucide-react';
+import Admin from './views/Admin';
+import AnnouncementsModal from './components/AnnouncementsModal';
+import TourModal from './components/TourModal';
+import { Home, Target, BookOpen, Wallet as WalletIcon, BarChart2, Settings } from 'lucide-react';
 
 export default function App() {
-  const { token, activeTab, setActiveTab, inAppToast, setInAppToast, isOnline } = useApp();
+  const { 
+    token, 
+    user, 
+    activeTab, 
+    setActiveTab, 
+    inAppToast, 
+    setInAppToast, 
+    isOnline,
+    showAnnouncementsModal,
+    setShowAnnouncementsModal,
+    showTour,
+    setShowTour
+  } = useApp();
 
   // If user is not authenticated, show Auth Page
   if (!token) {
@@ -32,6 +47,8 @@ export default function App() {
         return <Insights />;
       case 'profile':
         return <Profile />;
+      case 'admin':
+        return user?.role === 'admin' ? <Admin /> : <Today />;
       default:
         return <Today />;
     }
@@ -43,7 +60,8 @@ export default function App() {
     { id: 'challenges', label: 'Challenges', icon: Target },
     { id: 'journal', label: 'Journal', icon: BookOpen },
     { id: 'wallet', label: 'Wallet', icon: WalletIcon },
-    { id: 'insights', label: 'Insights', icon: BarChart2 }
+    { id: 'insights', label: 'Insights', icon: BarChart2 },
+    ...(user && user.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Settings }] : [])
   ];
 
   return (
@@ -82,7 +100,7 @@ export default function App() {
         </div>
 
         {/* Bottom Navigation Bar - Glass Panel matching the mockup */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-cream-50/90 backdrop-blur-md border-t border-cream-200 flex items-center justify-around px-4 z-40">
+        <div className="h-20 bg-cream-50/90 backdrop-blur-md border-t border-cream-200 flex items-center justify-around px-4 z-40 shrink-0">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -118,6 +136,16 @@ export default function App() {
             );
           })}
         </div>
+
+        {/* Global Announcements Modal */}
+        {showAnnouncementsModal && (
+          <AnnouncementsModal onClose={() => setShowAnnouncementsModal(false)} />
+        )}
+
+        {/* Global Onboarding Walkthrough Tour Modal */}
+        {showTour && (
+          <TourModal onClose={() => setShowTour(false)} />
+        )}
 
       </div>
     </div>

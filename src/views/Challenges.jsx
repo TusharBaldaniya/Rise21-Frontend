@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, Archive, Calendar, DollarSign, Target, AlignLeft, Check, User, Pencil, Flame } from 'lucide-react';
+import { Plus, Trash2, Archive, Calendar, DollarSign, Target, AlignLeft, Check, User, Pencil, Flame, Bell } from 'lucide-react';
 
 export default function Challenges() {
   const {
@@ -11,7 +11,9 @@ export default function Challenges() {
     fetchInsights,
     getTodayDateString,
     setActiveTab,
-    insights
+    insights,
+    unreadCount,
+    setShowAnnouncementsModal
   } = useApp();
 
   const [showModal, setShowModal] = useState(false);
@@ -170,7 +172,7 @@ export default function Challenges() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-6">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-6 pt-6">
       
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -196,6 +198,15 @@ export default function Challenges() {
               <span>{insights.currentStreak}d</span>
             </div>
           )}
+          <button 
+            onClick={() => setShowAnnouncementsModal(true)}
+            className="relative w-9 h-9 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse" />
+            )}
+          </button>
           <button 
             onClick={() => setActiveTab('profile')}
             className="w-9 h-9 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"

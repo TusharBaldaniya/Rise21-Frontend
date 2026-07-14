@@ -20,7 +20,8 @@ export default function Profile() {
     updateReminderSettings,
     sendTestNotification,
     restartSession,
-    enableBiometrics
+    enableBiometrics,
+    setShowTour
   } = useApp();
 
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState(
@@ -129,7 +130,7 @@ export default function Profile() {
   });
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-6">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-6 pt-6">
       
       {/* Header */}
       <div className="mb-6">
@@ -381,17 +382,17 @@ export default function Profile() {
             <div>
               <span className="text-cream-700 font-semibold block">Face ID / Touch ID Login</span>
               <span className="text-[10px] text-cream-400">
-                {localStorage.getItem('sadhna_bio_credential_id') 
+                {localStorage.getItem('rise21_bio_credential_id') 
                   ? 'Configured on this device ✓' 
                   : 'Enroll quick login on this browser'}
               </span>
             </div>
             <button
               onClick={async () => {
-                if (localStorage.getItem('sadhna_bio_credential_id')) {
+                if (localStorage.getItem('rise21_bio_credential_id')) {
                   if (window.confirm("Do you want to disable biometric login on this browser?")) {
-                    localStorage.removeItem('sadhna_bio_credential_id');
-                    localStorage.removeItem('sadhna_bio_token');
+                    localStorage.removeItem('rise21_bio_credential_id');
+                    localStorage.removeItem('rise21_bio_token');
                     window.location.reload();
                   }
                 } else {
@@ -402,16 +403,37 @@ export default function Profile() {
                 }
               }}
               className={`w-11 h-6 rounded-full transition-colors relative flex items-center focus:outline-none ${
-                localStorage.getItem('sadhna_bio_credential_id') ? 'bg-sage-500' : 'bg-cream-200'
+                localStorage.getItem('rise21_bio_credential_id') ? 'bg-sage-500' : 'bg-cream-200'
               }`}
             >
               <div
                 className={`w-4 h-4 bg-white rounded-full absolute transition-transform shadow-sm ${
-                  localStorage.getItem('sadhna_bio_credential_id') ? 'translate-x-6' : 'translate-x-1'
+                  localStorage.getItem('rise21_bio_credential_id') ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* 📖 Walkthrough Tour Settings Card */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
+          <Smartphone className="w-4 h-4 text-sage-500" />
+          <span>Onboarding Walkthrough</span>
+        </h3>
+
+        <div className="space-y-4 text-xs font-sans">
+          <p className="text-cream-600 leading-relaxed">
+            Need a refresher on how to navigate the app or how accountability penalties work? Launch the interactive walkthrough tour.
+          </p>
+          <button
+            onClick={() => setShowTour(true)}
+            className="w-full bg-sage-500 hover:bg-sage-600 text-white font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+          >
+            <span>📖</span>
+            <span>View App Walkthrough Tour</span>
+          </button>
         </div>
       </div>
 

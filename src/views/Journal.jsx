@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { BookOpen, Smile, AlertCircle, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, User, Flame } from 'lucide-react';
+import { BookOpen, Smile, AlertCircle, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, User, Flame, Bell } from 'lucide-react';
 
 export default function Journal() {
   const {
@@ -9,14 +9,16 @@ export default function Journal() {
     fetchInsights,
     getTodayDateString,
     setActiveTab,
-    insights
+    insights,
+    unreadCount,
+    setShowAnnouncementsModal
   } = useApp();
 
   const todayStr = getTodayDateString();
 
   // Triggers state (saved in localStorage)
   const [triggers, setTriggers] = useState(() => {
-    const saved = localStorage.getItem('sadhna_mind_triggers');
+    const saved = localStorage.getItem('rise21_mind_triggers');
     return saved ? JSON.parse(saved) : [
       { name: 'Negative thought', amount: 10 },
       { name: 'Anger', amount: 20 },
@@ -46,7 +48,7 @@ export default function Journal() {
 
   // Save triggers to localStorage
   useEffect(() => {
-    localStorage.setItem('sadhna_mind_triggers', JSON.stringify(triggers));
+    localStorage.setItem('rise21_mind_triggers', JSON.stringify(triggers));
   }, [triggers]);
 
   // Fetch today's mind logs
@@ -186,7 +188,7 @@ export default function Journal() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-6">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-6 pt-6">
       
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -205,6 +207,15 @@ export default function Journal() {
               <span>{insights.currentStreak}d</span>
             </div>
           )}
+          <button 
+            onClick={() => setShowAnnouncementsModal(true)}
+            className="relative w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse" />
+            )}
+          </button>
           <button 
             onClick={() => setActiveTab('profile')}
             className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"

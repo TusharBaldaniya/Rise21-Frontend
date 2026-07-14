@@ -4,11 +4,12 @@ const AppContext = createContext();
 
 export function AppProvider({ children }) {
   // Authentication State
-  const [token, setToken] = useState(localStorage.getItem('sadhna_token') || '');
+  const [token, setToken] = useState(localStorage.getItem('rise21_token') || '');
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('sadhna_user');
+    const saved = localStorage.getItem('rise21_user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [showTour, setShowTour] = useState(false);
 
   // App States
   const [challenges, setChallenges] = useState([]);
@@ -32,10 +33,10 @@ export function AppProvider({ children }) {
 
   // Reminder Notification State
   const [remindersEnabled, setRemindersEnabled] = useState(() => {
-    return localStorage.getItem('sadhna_reminders_enabled') === 'true';
+    return localStorage.getItem('rise21_reminders_enabled') === 'true';
   });
   const [reminderTime, setReminderTime] = useState(() => {
-    return localStorage.getItem('sadhna_reminder_time') || '20:00';
+    return localStorage.getItem('rise21_reminder_time') || '20:00';
   });
   const [inAppToast, setInAppToast] = useState({ show: false, message: '' });
 
@@ -361,7 +362,7 @@ export function AppProvider({ children }) {
         throw new Error('You are offline, and this resource is not cached.');
       } else {
         console.log(`Offline: queueing mutation ${method} for ${url}`);
-        const queueKey = 'sadhna_sync_queue';
+        const queueKey = 'rise21_sync_queue';
         const savedQueue = localStorage.getItem(queueKey);
         const queue = savedQueue ? JSON.parse(savedQueue) : [];
         
@@ -403,7 +404,7 @@ export function AppProvider({ children }) {
           }
         } else {
           console.log(`Mutation fetch failed: queueing ${method} for ${url}`);
-          const queueKey = 'sadhna_sync_queue';
+          const queueKey = 'rise21_sync_queue';
           const savedQueue = localStorage.getItem(queueKey);
           const queue = savedQueue ? JSON.parse(savedQueue) : [];
           
@@ -432,7 +433,7 @@ export function AppProvider({ children }) {
 
   const syncQueue = async () => {
     if (!navigator.onLine) return;
-    const queueKey = 'sadhna_sync_queue';
+    const queueKey = 'rise21_sync_queue';
     const savedQueue = localStorage.getItem(queueKey);
     if (!savedQueue) return;
     
@@ -491,9 +492,14 @@ export function AppProvider({ children }) {
       });
       setToken(data.token);
       setUser(data.user);
-      localStorage.setItem('sadhna_token', data.token);
-      localStorage.setItem('sadhna_user', JSON.stringify(data.user));
+      localStorage.setItem('rise21_token', data.token);
+      localStorage.setItem('rise21_user', JSON.stringify(data.user));
       setActiveTab('today');
+      
+      // Open walkthrough tour if not completed before
+      if (!localStorage.getItem('rise21_tour_completed')) {
+        setShowTour(true);
+      }
     } catch (err) {
       setError(err.message);
       throw err;
@@ -512,9 +518,14 @@ export function AppProvider({ children }) {
       });
       setToken(data.token);
       setUser(data.user);
-      localStorage.setItem('sadhna_token', data.token);
-      localStorage.setItem('sadhna_user', JSON.stringify(data.user));
+      localStorage.setItem('rise21_token', data.token);
+      localStorage.setItem('rise21_user', JSON.stringify(data.user));
       setActiveTab('today');
+      
+      // Open walkthrough tour if not completed before
+      if (!localStorage.getItem('rise21_tour_completed')) {
+        setShowTour(true);
+      }
     } catch (err) {
       setError(err.message);
       throw err;
@@ -530,8 +541,8 @@ export function AppProvider({ children }) {
     setWallet({ balance: 0, collected: 0, redirected: 0, transactions: [] });
     setTodayCheckIns([]);
     setInsights(null);
-    localStorage.removeItem('sadhna_token');
-    localStorage.removeItem('sadhna_user');
+    localStorage.removeItem('rise21_token');
+    localStorage.removeItem('rise21_user');
     setActiveTab('today');
   };
 
@@ -600,7 +611,7 @@ export function AppProvider({ children }) {
     try {
       const data = await apiFetch('/api/auth/me');
       setUser(data);
-      localStorage.setItem('sadhna_user', JSON.stringify(data));
+      localStorage.setItem('rise21_user', JSON.stringify(data));
     } catch (err) {
       console.error('Fetch profile error:', err);
     }
@@ -629,7 +640,7 @@ export function AppProvider({ children }) {
         body: JSON.stringify({ date: todayStr, reason })
       });
       setUser(updatedUser);
-      localStorage.setItem('sadhna_user', JSON.stringify(updatedUser));
+      localStorage.setItem('rise21_user', JSON.stringify(updatedUser));
       
       // Update caches to sync immediately
       localStorage.setItem('cache_/api/auth/me', JSON.stringify(updatedUser));
@@ -662,7 +673,7 @@ export function AppProvider({ children }) {
       const publicKeyOptions = {
         challenge,
         rp: {
-          name: 'Rise21 Sadhna Habit Tracker',
+          name: 'Rise21 Habit Tracker',
         },
         user: {
           id: userId,
@@ -686,8 +697,8 @@ export function AppProvider({ children }) {
 
       if (credential) {
         const credentialIdB64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-        localStorage.setItem('sadhna_bio_credential_id', credentialIdB64);
-        localStorage.setItem('sadhna_bio_token', token);
+        localStorage.setItem('rise21_bio_credential_id', credentialIdB64);
+        localStorage.setItem('rise21_bio_token', token);
         
         setInAppToast({
           show: true,
@@ -708,8 +719,8 @@ export function AppProvider({ children }) {
       return;
     }
 
-    const credentialIdB64 = localStorage.getItem('sadhna_bio_credential_id');
-    const bioToken = localStorage.getItem('sadhna_bio_token');
+    const credentialIdB64 = localStorage.getItem('rise21_bio_credential_id');
+    const bioToken = localStorage.getItem('rise21_bio_token');
     if (!credentialIdB64 || !bioToken) {
       alert('Biometric login is not set up yet. Please log in with password first.');
       return;
@@ -742,8 +753,8 @@ export function AppProvider({ children }) {
           headers: { Authorization: `Bearer ${bioToken}` }
         });
         setUser(data);
-        localStorage.setItem('sadhna_token', bioToken);
-        localStorage.setItem('sadhna_user', JSON.stringify(data));
+        localStorage.setItem('rise21_token', bioToken);
+        localStorage.setItem('rise21_user', JSON.stringify(data));
         setActiveTab('today');
         
         setInAppToast({
@@ -813,8 +824,8 @@ export function AppProvider({ children }) {
   const updateReminderSettings = (enabled, time) => {
     setRemindersEnabled(enabled);
     setReminderTime(time);
-    localStorage.setItem('sadhna_reminders_enabled', String(enabled));
-    localStorage.setItem('sadhna_reminder_time', time);
+    localStorage.setItem('rise21_reminders_enabled', String(enabled));
+    localStorage.setItem('rise21_reminder_time', time);
     
     if (enabled && 'Notification' in window) {
       if (Notification.permission === 'default') {
@@ -835,14 +846,14 @@ export function AppProvider({ children }) {
       "Your streak is waiting for you. Let's make today count! ✨",
       "Do not break the chain! Consistency is the key to mastery. 🔥",
       "Every small action builds your character. Keep going! 🚀",
-      "Sadhna is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
+      "Rise21 is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
       "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
       "The only bad check-in is the one that didn't happen. Check in now! ⏰"
     ];
 
     const trigger = () => {
       const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-      new Notification('Sadhna Habit Reminder 🎯', {
+      new Notification('Rise21 Habit Reminder 🎯', {
         body: `Test: ${randomQuote}`,
         icon: '/Rise21.png',
         badge: '/Rise21.png'
@@ -860,6 +871,138 @@ export function AppProvider({ children }) {
     } else {
       alert('Notification permissions are denied. Please enable them in browser settings.');
     }
+  };
+
+  // Announcement / Broadcast States
+  const [announcements, setAnnouncements] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showAnnouncementsModal, setShowAnnouncementsModal] = useState(false);
+
+  // Fetch recent announcements
+  const fetchAnnouncements = async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch('/api/announcements');
+      setAnnouncements(data);
+
+      const seenRaw = localStorage.getItem('rise21_seen_announcements');
+      const seenIds = seenRaw ? JSON.parse(seenRaw) : [];
+
+      const unread = data.filter(a => !seenIds.includes(a.id));
+      setUnreadCount(unread.length);
+
+      // Trigger toast and HTML5 browser notification for the latest unread announcement
+      if (unread.length > 0) {
+        const latest = unread[0]; // ordered desc, so first is newest
+        const lastNotifiedAnnounce = localStorage.getItem('rise21_last_notified_announce_id');
+        
+        if (lastNotifiedAnnounce !== latest.id) {
+          // Trigger in-app toast
+          setInAppToast({
+            show: true,
+            message: `📢 Update: ${latest.title} — ${latest.message.substring(0, 60)}...`
+          });
+
+          // Trigger browser notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification(`Rise21 Update: ${latest.title} 🎯`, {
+                body: latest.message,
+                icon: '/Rise21.png',
+                badge: '/Rise21.png'
+              });
+            } catch (err) {
+              console.error('Failed to trigger announcement notification:', err);
+            }
+          }
+          localStorage.setItem('rise21_last_notified_announce_id', latest.id);
+        }
+      }
+    } catch (err) {
+      console.error('Fetch announcements error:', err);
+    }
+  };
+
+  const markAllAnnouncementsRead = () => {
+    const allIds = announcements.map(a => a.id);
+    localStorage.setItem('rise21_seen_announcements', JSON.stringify(allIds));
+    setUnreadCount(0);
+  };
+
+  // Fetch announcements on mount and check periodically if logged in
+  useEffect(() => {
+    if (token) {
+      fetchAnnouncements();
+      const interval = setInterval(fetchAnnouncements, 60000 * 5); // Every 5 minutes
+      return () => clearInterval(interval);
+    }
+  }, [token]);
+
+  // Admin APIs
+  const fetchAdminUsers = async () => {
+    return await apiFetch('/api/admin/users');
+  };
+
+  const updateUserRole = async (userId, role) => {
+    const res = await apiFetch(`/api/admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role })
+    });
+    return res;
+  };
+
+  const resetUserData = async (userId) => {
+    return await apiFetch(`/api/admin/users/${userId}/reset`, {
+      method: 'POST'
+    });
+  };
+
+  const deleteUserAccount = async (userId) => {
+    return await apiFetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  };
+
+  const fetchAdminQuotes = async () => {
+    return await apiFetch('/api/admin/quotes');
+  };
+
+  const addQuote = async (quote) => {
+    return await apiFetch('/api/admin/quotes', {
+      method: 'POST',
+      body: JSON.stringify(quote)
+    });
+  };
+
+  const updateQuote = async (quoteId, quote) => {
+    return await apiFetch(`/api/admin/quotes/${quoteId}`, {
+      method: 'PUT',
+      body: JSON.stringify(quote)
+    });
+  };
+
+  const deleteQuote = async (quoteId) => {
+    return await apiFetch(`/api/admin/quotes/${quoteId}`, {
+      method: 'DELETE'
+    });
+  };
+
+  const broadcastAnnouncement = async (announcement) => {
+    const res = await apiFetch('/api/admin/announcements', {
+      method: 'POST',
+      body: JSON.stringify(announcement)
+    });
+    // Refresh local list immediately
+    fetchAnnouncements();
+    return res;
+  };
+
+  const deleteAnnouncement = async (announcementId) => {
+    const res = await apiFetch(`/api/admin/announcements/${announcementId}`, {
+      method: 'DELETE'
+    });
+    fetchAnnouncements();
+    return res;
   };
 
   useEffect(() => {
@@ -892,7 +1035,7 @@ export function AppProvider({ children }) {
         "Your streak is waiting for you. Let's make today count! ✨",
         "Do not break the chain! Consistency is the key to mastery. 🔥",
         "Every small action builds your character. Keep going! 🚀",
-        "Sadhna is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
+        "Rise21 is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
         "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
         "The only bad check-in is the one that didn't happen. Check in now! ⏰",
         "Discipline beats motivation every single time. Open Rise21 to check in! 💪"
@@ -900,7 +1043,7 @@ export function AppProvider({ children }) {
 
       // 1. Morning Nudge (09:00 AM)
       if (currentTimeStr === '09:00') {
-        const lastMorningNotified = localStorage.getItem('sadhna_last_morning_notified_date');
+        const lastMorningNotified = localStorage.getItem('rise21_last_morning_notified_date');
         if (lastMorningNotified !== todayStr) {
           const activeChallenges = challenges.filter(c => c.isActive);
           if (activeChallenges.length > 0) {
@@ -914,14 +1057,14 @@ export function AppProvider({ children }) {
             } catch (err) {
               console.error('Failed to trigger morning nudge:', err);
             }
-            localStorage.setItem('sadhna_last_morning_notified_date', todayStr);
+            localStorage.setItem('rise21_last_morning_notified_date', todayStr);
           }
         }
       }
 
       // 2. Evening Check-In (set by user)
       if (currentTimeStr === reminderTime) {
-        const lastNotified = localStorage.getItem('sadhna_last_notified_date');
+        const lastNotified = localStorage.getItem('rise21_last_notified_date');
 
         if (lastNotified !== todayStr) {
           const activeChallenges = challenges.filter(c => c.isActive);
@@ -935,7 +1078,7 @@ export function AppProvider({ children }) {
             const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
             const bodyText = `${randomQuote} You have ${uncheckedCount} challenge${uncheckedCount > 1 ? 's' : ''} left to update today.`;
             try {
-              new Notification('Sadhna Habit Reminder 🎯', {
+              new Notification('Rise21 Habit Reminder 🎯', {
                 body: bodyText,
                 icon: '/Rise21.png',
                 badge: '/Rise21.png'
@@ -949,7 +1092,7 @@ export function AppProvider({ children }) {
               message: `Reminder: ${bodyText}`
             });
 
-            localStorage.setItem('sadhna_last_notified_date', todayStr);
+            localStorage.setItem('rise21_last_notified_date', todayStr);
           }
         }
       }
@@ -1000,7 +1143,25 @@ export function AppProvider({ children }) {
       isOnline,
       restartSession,
       enableBiometrics,
-      loginWithBiometrics
+      loginWithBiometrics,
+      announcements,
+      unreadCount,
+      showAnnouncementsModal,
+      setShowAnnouncementsModal,
+      fetchAnnouncements,
+      markAllAnnouncementsRead,
+      fetchAdminUsers,
+      updateUserRole,
+      resetUserData,
+      deleteUserAccount,
+      fetchAdminQuotes,
+      addQuote,
+      updateQuote,
+      deleteQuote,
+      broadcastAnnouncement,
+      deleteAnnouncement,
+      showTour,
+      setShowTour
     }}>
       {children}
     </AppContext.Provider>

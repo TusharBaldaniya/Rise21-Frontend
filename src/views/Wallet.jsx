@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Heart, Book, Sparkles, Plus, AlertCircle, User, Flame } from 'lucide-react';
+import { Heart, Book, Sparkles, Plus, AlertCircle, User, Flame, Bell } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export default function Wallet() {
@@ -11,7 +11,9 @@ export default function Wallet() {
     fetchInsights,
     getTodayDateString,
     setActiveTab,
-    insights
+    insights,
+    unreadCount,
+    setShowAnnouncementsModal
   } = useApp();
 
   const [category, setCategory] = useState('Charity'); // 'Charity' | 'Books' | 'Help' | 'Custom'
@@ -84,7 +86,7 @@ export default function Wallet() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-6">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-6 pt-6">
       
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -103,6 +105,15 @@ export default function Wallet() {
               <span>{insights.currentStreak}d</span>
             </div>
           )}
+          <button 
+            onClick={() => setShowAnnouncementsModal(true)}
+            className="relative w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse" />
+            )}
+          </button>
           <button 
             onClick={() => setActiveTab('profile')}
             className="w-10 h-10 rounded-full border border-cream-300 bg-white flex items-center justify-center text-sage-600 hover:bg-cream-50 transition-colors shadow-sm"

@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Eye, EyeOff, Sparkles, User, Lock, Heart } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, User, Lock, Heart, Download, Smartphone } from 'lucide-react';
 
 export default function Auth() {
-  const { login, register, error, setError, loginWithBiometrics } = useApp();
+  const { 
+    login, 
+    register, 
+    error, 
+    setError, 
+    loginWithBiometrics,
+    isStandalone,
+    isInstallable,
+    isIOS,
+    triggerPwaInstall 
+  } = useApp();
   const [isLogin, setIsLogin] = useState(true);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -33,7 +44,21 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-cream-100">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-cream-100 relative">
+      {/* PWA Install Trigger in Top Right Corner */}
+      {!isStandalone && (
+        <div className="absolute top-4 right-4 z-30">
+          <button 
+            type="button"
+            onClick={() => setShowInstallModal(true)}
+            className="flex items-center gap-1.5 bg-white border border-cream-200 hover:bg-cream-50 text-sage-800 font-semibold px-3 py-2 rounded-2xl text-[10px] shadow-sm transition-all active:scale-95 font-sans"
+          >
+            <Download className="w-3.5 h-3.5 text-sage-600" />
+            <span>Install App</span>
+          </button>
+        </div>
+      )}
+
       <div className="w-full max-w-md bg-white rounded-3xl border border-sage-100 p-8 shadow-premium text-center">
         
         {/* Calming Brand Icon & Title */}
@@ -124,7 +149,7 @@ export default function Auth() {
             )}
           </button>
 
-          {isLogin && !!localStorage.getItem('sadhna_bio_credential_id') && (
+          {isLogin && !!localStorage.getItem('rise21_bio_credential_id') && (
             <button
               type="button"
               onClick={loginWithBiometrics}
@@ -173,6 +198,68 @@ export default function Auth() {
         </div>
 
       </div>
+
+      {/* PWA Install Instructions Modal Overlay */}
+      {showInstallModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowInstallModal(false)}>
+          <div 
+            className="bg-white w-full max-w-sm rounded-[32px] border border-sage-100 p-6 shadow-premium text-left relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              type="button"
+              onClick={() => setShowInstallModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-cream-50 border border-cream-200 flex items-center justify-center text-cream-400 hover:text-cream-600 hover:bg-cream-100 transition-colors"
+            >
+              ✕
+            </button>
+            <h3 className="font-serif text-lg font-bold text-sage-900 mb-3 flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-sage-500" />
+              <span>Install Rise21 App</span>
+            </h3>
+            
+            {isInstallable ? (
+              <div className="text-xs font-sans space-y-4">
+                <p className="text-cream-600 leading-relaxed">
+                  Install Rise21 directly onto your device's home screen for quick mobile access, offline capability, and notifications.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerPwaInstall();
+                    setShowInstallModal(false);
+                  }}
+                  className="w-full bg-sage-500 hover:bg-sage-600 text-white font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Install PWA App</span>
+                </button>
+              </div>
+            ) : isIOS ? (
+              <div className="text-xs font-sans space-y-3 text-cream-700">
+                <p className="font-semibold text-sage-950 leading-snug">To add this application to your iPhone or iPad Home Screen:</p>
+                <ol className="list-decimal list-inside space-y-1.5 leading-snug text-cream-600">
+                  <li>Tap the <strong className="text-sage-850">Share</strong> button at the bottom of Safari.</li>
+                  <li>Scroll down and select <strong className="text-sage-850">"Add to Home Screen"</strong>.</li>
+                  <li>Name it "Rise21" and tap <strong className="text-sage-850">Add</strong>.</li>
+                </ol>
+                <p className="text-[10px] text-cream-400 leading-snug pt-1">
+                  Note: This option is only supported when viewing the app in the Safari browser.
+                </p>
+              </div>
+            ) : (
+              <div className="text-xs font-sans space-y-3 text-cream-600 leading-relaxed">
+                <p>To turn this website into an app on your current browser:</p>
+                <ul className="list-disc list-inside space-y-1 leading-snug">
+                  <li>On Google Chrome or MS Edge: Click the desktop install icon in the address bar.</li>
+                  <li>On Android browsers (Firefox/Opera): Tap menu options and select <strong>"Add to Home Screen"</strong>.</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
