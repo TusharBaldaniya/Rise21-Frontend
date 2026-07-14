@@ -185,13 +185,6 @@ export default function Challenges() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-sage-500 hover:bg-sage-600 text-white font-medium py-2 px-3 rounded-xl text-xs transition-all shadow-sm active:scale-[0.98]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New</span>
-          </button>
           {insights && (
             <div className="flex items-center gap-1 bg-orange-50 border border-orange-200/50 px-2.5 py-1.5 rounded-full text-orange-700 font-bold font-sans text-xs shadow-sm">
               <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
@@ -224,15 +217,31 @@ export default function Challenges() {
           <p className="text-xs text-cream-600 max-w-xs mb-4 mt-1 font-sans">
             Start a new streak. Commit to a 21-day self-discipline journey.
           </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1.5 bg-sage-500 hover:bg-sage-600 text-white font-medium py-2.5 px-4 rounded-2xl text-xs transition-all shadow-sm active:scale-[0.98] mt-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Challenge</span>
+          </button>
         </div>
       ) : (
         <div className="space-y-8">
           
           {/* Active Challenges */}
           <div>
-            <h2 className="font-serif text-lg font-semibold text-sage-800 mb-4 border-b border-cream-200 pb-2">
-              Active Journeys
-            </h2>
+            <div className="flex justify-between items-center mb-4 border-b border-cream-200 pb-2">
+              <h2 className="font-serif text-lg font-semibold text-sage-800">
+                Active Journeys
+              </h2>
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-1 bg-sage-500 hover:bg-sage-600 text-white font-medium py-1.5 px-2.5 rounded-xl text-[11px] transition-all shadow-sm active:scale-[0.98]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New</span>
+              </button>
+            </div>
             
             {challenges.filter(c => c.isActive).length === 0 ? (
               <p className="text-xs text-cream-400 font-sans italic">No active challenges. Start one to begin.</p>
