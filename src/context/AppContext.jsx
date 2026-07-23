@@ -880,12 +880,12 @@ export function AppProvider({ children }) {
     return outputArray;
   }
 
-  const subscribeToWebPush = async () => {
+  const subscribeToWebPush = async (customTime) => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
     try {
       const reg = await navigator.serviceWorker.ready;
-      const res = await fetch(`/api/notifications/vapid-public-key`);
+      const res = await fetch(`${API_BASE}/api/notifications/vapid-public-key`);
       const { publicKey } = await res.json();
       if (!publicKey) return;
 
@@ -898,15 +898,16 @@ export function AppProvider({ children }) {
         });
       }
 
-      await fetch(`/api/notifications/subscribe`, {
+      await fetch(`${API_BASE}/api/notifications/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscription: sub,
-          userId: user?.id || 'anonymous'
+          userId: user?.id || 'anonymous',
+          reminderTime: customTime || reminderTime
         })
       });
-      console.log('✅ Web Push Subscription registered successfully');
+      console.log('✅ Web Push Subscription registered successfully with backend');
     } catch (err) {
       console.error('Web Push subscription failed:', err);
     }
@@ -922,11 +923,11 @@ export function AppProvider({ children }) {
       if (Notification.permission === 'default') {
         Notification.requestPermission().then(permission => {
           if (permission === 'granted') {
-            subscribeToWebPush();
+            subscribeToWebPush(time);
           }
         });
       } else if (Notification.permission === 'granted') {
-        subscribeToWebPush();
+        subscribeToWebPush(time);
       }
     }
   };
@@ -934,9 +935,9 @@ export function AppProvider({ children }) {
   // Automatically attempt Web Push subscription on mount if reminders are enabled
   useEffect(() => {
     if (remindersEnabled && 'Notification' in window && Notification.permission === 'granted') {
-      subscribeToWebPush();
+      subscribeToWebPush(reminderTime);
     }
-  }, [remindersEnabled, token]);
+  }, [remindersEnabled, token, reminderTime]);
 
   const sendTestNotification = () => {
     if (!('Notification' in window)) {
@@ -950,7 +951,7 @@ export function AppProvider({ children }) {
         body: randomQuote
       });
       // Also send Web Push payload from backend
-      fetch(`/api/notifications/test-push`, {
+      fetch(`${API_BASE}/api/notifications/test-push`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id })
@@ -962,7 +963,7 @@ export function AppProvider({ children }) {
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
-          subscribeToWebPush();
+          subscribeToWebPush(reminderTime);
           trigger();
         }
       });
@@ -1188,6 +1189,98 @@ export function AppProvider({ children }) {
     return () => clearInterval(checkInterval);
   }, [remindersEnabled, reminderTime, challenges, todayCheckIns, token, dailyQuote]);
 
+  // Web Audio Synthesizer Chime + Haptic Feedback
+  const playSuccessChime = () => {
+    try {
+      if ('vibrate' in navigator) {
+        navigator.vibrate([30, 40, 50]);
+      }
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+
+      osc1.frequency.setValueAtTime(523.25, now); // C5
+      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15); // E5
+
+      osc2.frequency.setValueAtTime(659.25, now + 0.15);
+      osc2.frequency.exponentialRampToValueAtTime(1046.50, now + 0.35); // C6
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc1.stop(now + 0.2);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.4);
+    } catch (e) {
+      console.error('Audio chime error:', e);
+    }
+  };
+
+  // Dynamic PWA App Icon Badging
+  useEffect(() => {
+    if (!('setAppBadge' in navigator)) return;
+    const activeChallenges = challenges.filter(c => c.isActive);
+    const uncheckedCount = activeChallenges.filter(c => !todayCheckIns.some(ci => ci.challengeId === c.id)).length;
+    
+    if (uncheckedCount > 0) {
+      navigator.setAppBadge(uncheckedCount).catch(() => {});
+    } else {
+      if ('clearAppBadge' in navigator) {
+        navigator.clearAppBadge().catch(() => {});
+      }
+    }
+  }, [challenges, todayCheckIns]);
+
+  // Export Personal Discipline Data as CSV
+  const exportUserDataCSV = () => {
+    try {
+      let csv = "Category,Date,Title / Name,Status / Amount,Details\n";
+
+      challenges.forEach(c => {
+        const cleanTitle = (c.title || '').replace(/"/g, '""');
+        const cleanTarget = (c.dailyTarget || '').replace(/"/g, '""');
+        csv += `"Challenge","${new Date(c.createdAt).toISOString().split('T')[0]}","${cleanTitle}","${c.isActive ? 'Active' : 'Archived'}","Target: ${cleanTarget}"\n`;
+      });
+
+      todayCheckIns.forEach(ci => {
+        csv += `"CheckIn","${ci.date}","Challenge: ${ci.challengeId}","${ci.status}","Penalty Charged: ₹${ci.penaltyCharged}"\n`;
+      });
+
+      if (wallet && wallet.transactions) {
+        wallet.transactions.forEach(t => {
+          const cleanCat = (t.category || '').replace(/"/g, '""');
+          const cleanDesc = (t.description || '').replace(/"/g, '""');
+          csv += `"Wallet","${t.date}","${cleanCat}","₹${t.amount}","${cleanDesc}"\n`;
+        });
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Rise21_Discipline_Data_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export data: ' + err.message);
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       token,
@@ -1243,7 +1336,9 @@ export function AppProvider({ children }) {
       broadcastAnnouncement,
       deleteAnnouncement,
       showTour,
-      setShowTour
+      setShowTour,
+      playSuccessChime,
+      exportUserDataCSV
     }}>
       {children}
     </AppContext.Provider>

@@ -16,7 +16,8 @@ export default function Today() {
     insights,
     getTodayDateString,
     unreadCount,
-    setShowAnnouncementsModal
+    setShowAnnouncementsModal,
+    playSuccessChime
   } = useApp();
 
   const [excuseModal, setExcuseModal] = useState({ show: false, challenge: null });
@@ -87,8 +88,9 @@ export default function Today() {
         })
       });
 
-      // Trigger Confetti on completion!
+      // Trigger Confetti & Chime on completion!
       if (status === 'completed') {
+        if (playSuccessChime) playSuccessChime();
         confetti({
           particleCount: 80,
           spread: 60,

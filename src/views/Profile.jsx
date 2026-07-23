@@ -21,7 +21,8 @@ export default function Profile() {
     sendTestNotification,
     restartSession,
     enableBiometrics,
-    setShowTour
+    setShowTour,
+    exportUserDataCSV
   } = useApp();
 
   const [notificationPermissionStatus, setNotificationPermissionStatus] = useState(
@@ -514,11 +515,64 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Profile statistics */}
+      {/* 🏅 Achievement Badges & Milestones */}
       <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
-        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2">
-          Rise21 Stats
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500 mb-4 border-b border-cream-50 pb-2 flex items-center gap-1.5">
+          <Award className="w-4 h-4 text-sage-500" />
+          <span>Achievement Badges</span>
         </h3>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-sans">
+          {(() => {
+            const currentStreak = insights?.currentStreak || 0;
+            const bestStreak = insights?.bestStreak || 0;
+            const totalSelfies = selfies.length;
+
+            const badgeDefinitions = [
+              { id: '7day', title: '7-Day Warrior', icon: '🥉', desc: '7-day streak', unlocked: bestStreak >= 7, progress: `${Math.min(bestStreak, 7)}/7d` },
+              { id: '14day', title: '14-Day Alchemist', icon: '🥈', desc: '14-day streak', unlocked: bestStreak >= 14, progress: `${Math.min(bestStreak, 14)}/14d` },
+              { id: '21day', title: 'Rise21 Master', icon: '🥇', desc: '21-day streak', unlocked: bestStreak >= 21, progress: `${Math.min(bestStreak, 21)}/21d` },
+              { id: 'selfies', title: 'Visual Proof', icon: '📸', desc: '5 selfies logged', unlocked: totalSelfies >= 5, progress: `${Math.min(totalSelfies, 5)}/5 photos` },
+              { id: 'flawless', title: 'Discipline Shield', icon: '🛡️', desc: 'Zero penalties logged', unlocked: wallet.balance === 0, progress: wallet.balance === 0 ? 'Flawless' : 'Charged' }
+            ];
+
+            return badgeDefinitions.map(b => (
+              <div
+                key={b.id}
+                className={`p-3 rounded-2xl border text-center flex flex-col items-center justify-between transition-all ${
+                  b.unlocked
+                    ? 'bg-sage-50/70 border-sage-200/80 shadow-sm'
+                    : 'bg-cream-50/40 border-cream-200/60 opacity-60'
+                }`}
+              >
+                <div className="text-2xl mb-1 drop-shadow-sm">{b.icon}</div>
+                <span className="font-semibold text-[11px] text-sage-900 leading-tight block mb-0.5">{b.title}</span>
+                <span className="text-[9px] text-cream-500 block leading-tight">{b.desc}</span>
+                <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full mt-2 font-bold ${
+                  b.unlocked ? 'bg-sage-600 text-white' : 'bg-cream-200 text-cream-600'
+                }`}>
+                  {b.unlocked ? 'Unlocked ✓' : b.progress}
+                </span>
+              </div>
+            ));
+          })()}
+        </div>
+      </div>
+
+      {/* Profile statistics & Data Export */}
+      <div className="bg-white border border-sage-100 rounded-3xl p-6 shadow-premium mb-6">
+        <div className="flex justify-between items-center mb-4 border-b border-cream-50 pb-2">
+          <h3 className="font-serif text-sm font-semibold uppercase tracking-wider text-cream-500">
+            Rise21 Stats
+          </h3>
+          <button
+            onClick={exportUserDataCSV}
+            className="bg-cream-100 hover:bg-cream-200 text-sage-800 font-semibold py-1 px-3 rounded-xl text-[10px] transition-all flex items-center gap-1 border border-cream-200 active:scale-95 shadow-sm"
+          >
+            <Download className="w-3 h-3 text-sage-600" />
+            <span>Export Data (CSV)</span>
+          </button>
+        </div>
 
         <div className="space-y-4 text-xs font-sans">
           <div className="flex justify-between items-center py-1">
