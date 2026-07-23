@@ -351,179 +351,181 @@ export default function Challenges() {
 
       {/* Creation Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-sage-100 p-6 shadow-premium max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="font-serif text-xl font-semibold text-sage-950 mb-6 flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 pb-24 sm:pb-4">
+          <div className="bg-white w-full max-w-md rounded-3xl border border-sage-100 p-6 shadow-2xl max-h-[80vh] sm:max-h-[85vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="font-serif text-xl font-semibold text-sage-950 mb-4 flex items-center gap-2 shrink-0">
               <Target className="w-5 h-5 text-sage-500" />
               <span>Create New Challenge</span>
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-left">
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Challenge Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Wake Up at 5 AM"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Choose Icon / Emoji
-                </label>
-                <div className="flex flex-wrap gap-2 p-2 bg-cream-50 border border-cream-200 rounded-2xl">
-                  {emojiOptions.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setIcon(emoji)}
-                      className={`w-9 h-9 text-base rounded-xl flex items-center justify-center transition-all ${
-                        icon === emoji 
-                          ? 'bg-sage-500 text-white scale-110 shadow-sm' 
-                          : 'hover:bg-cream-100'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Why you started (Motivation statement)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. I want to build focus and be healthy"
-                  value={whyStarted}
-                  onChange={(e) => setWhyStarted(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Build daily routine"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Daily Target Rule
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Wake up before 5:00 AM every single day"
-                  value={dailyTarget}
-                  onChange={(e) => setDailyTarget(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden text-left">
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                    Start Date
+                    Challenge Title
                   </label>
                   <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    type="text"
+                    placeholder="e.g. Wake Up at 5 AM"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
                     required
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                    End Date (Auto)
+                    Choose Icon / Emoji
+                  </label>
+                  <div className="flex flex-wrap gap-2 p-2 bg-cream-50 border border-cream-200 rounded-2xl">
+                    {emojiOptions.map(emoji => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setIcon(emoji)}
+                        className={`w-9 h-9 text-base rounded-xl flex items-center justify-center transition-all ${
+                          icon === emoji 
+                            ? 'bg-sage-500 text-white scale-110 shadow-sm' 
+                            : 'hover:bg-cream-100'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Why you started (Motivation statement)
                   </label>
                   <input
-                    type="date"
-                    value={endDate}
-                    disabled
-                    className="w-full p-3 bg-cream-100 border border-cream-200 rounded-2xl text-sm text-cream-500 font-sans cursor-not-allowed"
+                    type="text"
+                    placeholder="e.g. I want to build focus and be healthy"
+                    value={whyStarted}
+                    onChange={(e) => setWhyStarted(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Build daily routine"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Daily Target Rule
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Wake up before 5:00 AM every single day"
+                    value={dailyTarget}
+                    onChange={(e) => setDailyTarget(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                      End Date (Auto)
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      disabled
+                      className="w-full p-3 bg-cream-100 border border-cream-200 rounded-2xl text-sm text-cream-500 font-sans cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Duration
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['7', '21', '30', 'custom'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setDurationPreset(opt)}
+                        className={`py-2 px-3 rounded-xl border text-xs font-medium capitalize font-sans transition-all ${
+                          durationPreset === opt
+                            ? 'bg-sage-500 border-sage-500 text-white shadow-sm'
+                            : 'bg-cream-50 border-cream-200 text-cream-600 hover:bg-cream-100'
+                        }`}
+                      >
+                        {opt === 'custom' ? 'Custom' : `${opt} Days`}
+                      </button>
+                    ))}
+                  </div>
+
+                  {durationPreset === 'custom' && (
+                    <div className="mt-3">
+                      <input
+                        type="number"
+                        placeholder="Enter number of days"
+                        value={customDays}
+                        onChange={(e) => setCustomDays(e.target.value)}
+                        className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                        min="1"
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Self-Accountability Charge (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 50"
+                    value={penaltyAmount}
+                    onChange={(e) => setPenaltyAmount(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    min="0"
+                    required
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Duration
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['7', '21', '30', 'custom'].map(opt => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setDurationPreset(opt)}
-                      className={`py-2 px-3 rounded-xl border text-xs font-medium capitalize font-sans transition-all ${
-                        durationPreset === opt
-                          ? 'bg-sage-500 border-sage-500 text-white shadow-sm'
-                          : 'bg-cream-50 border-cream-200 text-cream-600 hover:bg-cream-100'
-                      }`}
-                    >
-                      {opt === 'custom' ? 'Custom' : `${opt} Days`}
-                    </button>
-                  ))}
-                </div>
-
-                {durationPreset === 'custom' && (
-                  <div className="mt-3">
-                    <input
-                      type="number"
-                      placeholder="Enter number of days"
-                      value={customDays}
-                      onChange={(e) => setCustomDays(e.target.value)}
-                      className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                      min="1"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Self-Accountability Charge (₹)
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g. 50"
-                  value={penaltyAmount}
-                  onChange={(e) => setPenaltyAmount(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  min="0"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4 border-t border-cream-100 mt-6">
+              <div className="flex gap-3 justify-end pt-3 pb-1 border-t border-cream-100 mt-4 shrink-0 bg-white z-10">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-cream-200 rounded-xl text-xs text-cream-600 hover:bg-cream-50 font-medium"
+                  className="px-4 py-2 border border-cream-200 rounded-xl text-xs text-cream-600 hover:bg-cream-50 font-medium active:scale-95 transition-transform"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-sage-500 hover:bg-sage-600 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+                  className="px-5 py-2 bg-sage-500 hover:bg-sage-600 text-white rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-95"
                 >
                   {loading ? 'Creating...' : 'Create'}
                 </button>
@@ -535,129 +537,131 @@ export default function Challenges() {
 
       {/* Edit Modal */}
       {editModal.show && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-sage-100 p-6 shadow-premium max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-            <h2 className="font-serif text-xl font-semibold text-sage-950 mb-6 flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 pb-24 sm:pb-4">
+          <div className="bg-white w-full max-w-md rounded-3xl border border-sage-100 p-6 shadow-2xl max-h-[80vh] sm:max-h-[85vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="font-serif text-xl font-semibold text-sage-950 mb-4 flex items-center gap-2 shrink-0">
               <Pencil className="w-5 h-5 text-sage-500" />
               <span>Edit Challenge</span>
             </h2>
 
-            <form onSubmit={handleEditSubmit} className="space-y-4 text-left">
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Challenge Title
-                </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  required
-                />
-              </div>
+            <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden text-left">
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Challenge Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Choose Icon / Emoji
-                </label>
-                <div className="flex flex-wrap gap-2 p-2 bg-cream-50 border border-cream-200 rounded-2xl">
-                  {emojiOptions.map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setEditIcon(emoji)}
-                      className={`w-9 h-9 text-base rounded-xl flex items-center justify-center transition-all ${
-                        editIcon === emoji 
-                          ? 'bg-sage-500 text-white scale-110 shadow-sm' 
-                          : 'hover:bg-cream-100'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Choose Icon / Emoji
+                  </label>
+                  <div className="flex flex-wrap gap-2 p-2 bg-cream-50 border border-cream-200 rounded-2xl">
+                    {emojiOptions.map(emoji => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setEditIcon(emoji)}
+                        className={`w-9 h-9 text-base rounded-xl flex items-center justify-center transition-all ${
+                          editIcon === emoji 
+                            ? 'bg-sage-500 text-white scale-110 shadow-sm' 
+                            : 'hover:bg-cream-100'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Why you started (Motivation statement)
+                  </label>
+                  <input
+                    type="text"
+                    value={editWhyStarted}
+                    onChange={(e) => setEditWhyStarted(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Daily Target Rule
+                  </label>
+                  <input
+                    type="text"
+                    value={editDailyTarget}
+                    onChange={(e) => setEditDailyTarget(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Self-Accountability Charge (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editPenaltyAmount}
+                    onChange={(e) => setEditPenaltyAmount(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
+                    Challenge Duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    value={editDurationDays}
+                    onChange={(e) => setEditDurationDays(e.target.value)}
+                    className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
+                    min="1"
+                    required
+                  />
+                  <span className="text-[10px] text-cream-400 mt-1 block leading-normal ml-1">
+                    Extend duration to add more days to your discipline journey.
+                  </span>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Why you started (Motivation statement)
-                </label>
-                <input
-                  type="text"
-                  value={editWhyStarted}
-                  onChange={(e) => setEditWhyStarted(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Daily Target Rule
-                </label>
-                <input
-                  type="text"
-                  value={editDailyTarget}
-                  onChange={(e) => setEditDailyTarget(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Self-Accountability Charge (₹)
-                </label>
-                <input
-                  type="number"
-                  value={editPenaltyAmount}
-                  onChange={(e) => setEditPenaltyAmount(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  min="0"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-cream-500 uppercase tracking-wider mb-2 ml-1">
-                  Challenge Duration (days)
-                </label>
-                <input
-                  type="number"
-                  value={editDurationDays}
-                  onChange={(e) => setEditDurationDays(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-sage-300 focus:ring-1 focus:ring-sage-300 font-sans"
-                  min="1"
-                  required
-                />
-                <span className="text-[10px] text-cream-400 mt-1 block leading-normal ml-1">
-                  Extend duration to add more days to your discipline journey.
-                </span>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4 border-t border-cream-100 mt-6">
+              <div className="flex gap-3 justify-end pt-3 pb-1 border-t border-cream-100 mt-4 shrink-0 bg-white z-10">
                 <button
                   type="button"
                   onClick={() => setEditModal({ show: false, challenge: null })}
-                  className="px-4 py-2 border border-cream-200 rounded-xl text-xs text-cream-600 hover:bg-cream-50 font-medium"
+                  className="px-4 py-2 border border-cream-200 rounded-xl text-xs text-cream-600 hover:bg-cream-50 font-medium active:scale-95 transition-transform"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-sage-500 hover:bg-sage-600 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+                  className="px-5 py-2 bg-sage-500 hover:bg-sage-600 text-white rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-95"
                 >
                   {loading ? 'Saving...' : 'Save Changes'}
                 </button>

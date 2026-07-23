@@ -869,6 +869,49 @@ export function AppProvider({ children }) {
     return motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
   };
 
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const subscribeToWebPush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const res = await fetch(`/api/notifications/vapid-public-key`);
+      const { publicKey } = await res.json();
+      if (!publicKey) return;
+
+      const convertedKey = urlBase64ToUint8Array(publicKey);
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey
+        });
+      }
+
+      await fetch(`/api/notifications/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: sub,
+          userId: user?.id || 'anonymous'
+        })
+      });
+      console.log('✅ Web Push Subscription registered successfully');
+    } catch (err) {
+      console.error('Web Push subscription failed:', err);
+    }
+  };
+
   const updateReminderSettings = (enabled, time) => {
     setRemindersEnabled(enabled);
     setReminderTime(time);
@@ -877,10 +920,23 @@ export function AppProvider({ children }) {
     
     if (enabled && 'Notification' in window) {
       if (Notification.permission === 'default') {
-        Notification.requestPermission();
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            subscribeToWebPush();
+          }
+        });
+      } else if (Notification.permission === 'granted') {
+        subscribeToWebPush();
       }
     }
   };
+
+  // Automatically attempt Web Push subscription on mount if reminders are enabled
+  useEffect(() => {
+    if (remindersEnabled && 'Notification' in window && Notification.permission === 'granted') {
+      subscribeToWebPush();
+    }
+  }, [remindersEnabled, token]);
 
   const sendTestNotification = () => {
     if (!('Notification' in window)) {
@@ -893,6 +949,12 @@ export function AppProvider({ children }) {
       triggerNotification('Daily Motivation 🎯', {
         body: randomQuote
       });
+      // Also send Web Push payload from backend
+      fetch(`/api/notifications/test-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id })
+      }).catch(err => console.error('Test push error:', err));
     };
 
     if (Notification.permission === 'granted') {
@@ -900,6 +962,7 @@ export function AppProvider({ children }) {
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(permission => {
         if (permission === 'granted') {
+          subscribeToWebPush();
           trigger();
         }
       });

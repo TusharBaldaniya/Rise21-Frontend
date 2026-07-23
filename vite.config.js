@@ -9,6 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      workbox: {
+        importScripts: ['sw-push.js']
+      },
       manifest: {
         name: 'Rise21 — 21 Day Challenge Tracker',
         short_name: 'Rise21',
