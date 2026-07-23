@@ -141,7 +141,7 @@ export default function Profile() {
   });
 
   return (
-    <div className="p-4 max-w-md mx-auto min-h-screen pb-24 font-serif text-sage-900 bg-cream-100">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pb-24 pt-4 font-serif text-sage-900 bg-cream-100">
       
       {/* User Header */}
       <div className="flex flex-col items-center text-center my-6 bg-white border border-sage-100 rounded-3xl p-6 shadow-premium">
