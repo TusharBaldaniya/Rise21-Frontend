@@ -328,10 +328,30 @@ export default function Profile() {
 
           {remindersEnabled && (
             <>
+              <div className="border-t border-cream-50 pt-3 space-y-2">
+                <div className="text-cream-700 font-semibold block text-[11px]">Auto Quote Notifications</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-sage-50/60 border border-sage-100/80 rounded-xl p-2.5 flex items-center gap-2">
+                    <span className="text-base">☀️</span>
+                    <div>
+                      <span className="font-semibold text-sage-800 text-[11px] block">Morning Quote</span>
+                      <span className="text-[10px] text-sage-600 font-mono">07:00 AM Daily</span>
+                    </div>
+                  </div>
+                  <div className="bg-sage-50/60 border border-sage-100/80 rounded-xl p-2.5 flex items-center gap-2">
+                    <span className="text-base">🌙</span>
+                    <div>
+                      <span className="font-semibold text-sage-800 text-[11px] block">Evening Quote</span>
+                      <span className="text-[10px] text-sage-600 font-mono">09:30 PM Daily</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-between items-center py-1 border-t border-cream-50 pt-3">
                 <div>
-                  <span className="text-cream-700 font-semibold block">Reminder Time</span>
-                  <span className="text-[10px] text-cream-400">Set daily check-in prompt time</span>
+                  <span className="text-cream-700 font-semibold block">Additional Custom Reminder</span>
+                  <span className="text-[10px] text-cream-400">Set an extra daily check-in time</span>
                 </div>
                 <input
                   type="time"

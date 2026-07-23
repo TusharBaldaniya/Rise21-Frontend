@@ -821,6 +821,54 @@ export function AppProvider({ children }) {
     }
   }, [isOnline, token]);
 
+  // Notification Trigger Helper
+  const triggerNotification = (title, options = {}) => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const notificationOptions = {
+      icon: '/Rise21.png',
+      badge: '/Rise21.png',
+      ...options
+    };
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready
+        .then(reg => reg.showNotification(title, notificationOptions))
+        .catch(() => new Notification(title, notificationOptions));
+    } else {
+      try {
+        new Notification(title, notificationOptions);
+      } catch (err) {
+        console.error('Failed to trigger notification:', err);
+      }
+    }
+  };
+
+  const getRandomQuoteMessage = () => {
+    const motivationalMessages = [
+      "Discipline is choosing between what you want now and what you want most. 🎯",
+      "A 21-day challenge is won day by day. Check in today! 💪",
+      "Your streak is waiting for you. Let's make today count! ✨",
+      "Do not break the chain! Consistency is the key to mastery. 🔥",
+      "Every small action builds your character. Keep going! 🚀",
+      "Focus on the process, and the results will follow. Log your progress! 🧘‍♂️",
+      "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
+      "The only bad check-in is the one that didn't happen. Check in now! ⏰",
+      "Discipline beats motivation every single time. Open app to check in! 💪",
+      "Small daily improvements over time lead to stunning results. 📈",
+      "Mastering yourself is true power. Stay mindful and centered today! 🧘",
+      "Success isn't always about greatness. It's about consistency. 🔥"
+    ];
+
+    if (dailyQuote && dailyQuote.text && !dailyQuote.text.includes("Loading")) {
+      const quoteStr = dailyQuote.author ? `"${dailyQuote.text}" — ${dailyQuote.author}` : `"${dailyQuote.text}"`;
+      if (Math.random() > 0.4) return quoteStr;
+    }
+
+    return motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+  };
+
   const updateReminderSettings = (enabled, time) => {
     setRemindersEnabled(enabled);
     setReminderTime(time);
@@ -839,24 +887,11 @@ export function AppProvider({ children }) {
       alert('Browser does not support notifications.');
       return;
     }
-    
-    const motivationalMessages = [
-      "Discipline is choosing between what you want now and what you want most. 🎯",
-      "A 21-day challenge is won day by day. Check in today! 💪",
-      "Your streak is waiting for you. Let's make today count! ✨",
-      "Do not break the chain! Consistency is the key to mastery. 🔥",
-      "Every small action builds your character. Keep going! 🚀",
-      "Rise21 is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
-      "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
-      "The only bad check-in is the one that didn't happen. Check in now! ⏰"
-    ];
 
     const trigger = () => {
-      const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-      new Notification('Rise21 Habit Reminder 🎯', {
-        body: `Test: ${randomQuote}`,
-        icon: '/Rise21.png',
-        badge: '/Rise21.png'
+      const randomQuote = getRandomQuoteMessage();
+      triggerNotification('Daily Motivation 🎯', {
+        body: randomQuote
       });
     };
 
@@ -903,18 +938,10 @@ export function AppProvider({ children }) {
             message: `📢 Update: ${latest.title} — ${latest.message.substring(0, 60)}...`
           });
 
-          // Trigger browser notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-              new Notification(`Rise21 Update: ${latest.title} 🎯`, {
-                body: latest.message,
-                icon: '/Rise21.png',
-                badge: '/Rise21.png'
-              });
-            } catch (err) {
-              console.error('Failed to trigger announcement notification:', err);
-            }
-          }
+          // Trigger browser notification without Rise21 text in title (logo only)
+          triggerNotification(latest.title, {
+            body: latest.message
+          });
           localStorage.setItem('rise21_last_notified_announce_id', latest.id);
         }
       }
@@ -1014,7 +1041,7 @@ export function AppProvider({ children }) {
     }
   }, [inAppToast.show]);
 
-  // Periodic Daily Reminder & Morning Nudge Check
+  // Periodic Auto Daily Quote Reminder & Check (7:00 AM, 9:30 PM & Custom Time)
   useEffect(() => {
     if (!remindersEnabled || !token) return;
 
@@ -1028,42 +1055,40 @@ export function AppProvider({ children }) {
       const currentTimeStr = `${currentHours}:${currentMinutes}`;
       const todayStr = getTodayDateString();
 
-      // Curated motivational messages
-      const motivationalMessages = [
-        "Discipline is choosing between what you want now and what you want most. 🎯",
-        "A 21-day challenge is won day by day. Check in today! 💪",
-        "Your streak is waiting for you. Let's make today count! ✨",
-        "Do not break the chain! Consistency is the key to mastery. 🔥",
-        "Every small action builds your character. Keep going! 🚀",
-        "Rise21 is the journey to self-control. Open the app to log your progress! 🧘‍♂️",
-        "Keep your daily commitments alive today. Let's stay disciplined! 🌟",
-        "The only bad check-in is the one that didn't happen. Check in now! ⏰",
-        "Discipline beats motivation every single time. Open Rise21 to check in! 💪"
-      ];
-
-      // 1. Morning Nudge (09:00 AM)
-      if (currentTimeStr === '09:00') {
-        const lastMorningNotified = localStorage.getItem('rise21_last_morning_notified_date');
-        if (lastMorningNotified !== todayStr) {
-          const activeChallenges = challenges.filter(c => c.isActive);
-          if (activeChallenges.length > 0) {
-            const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-            try {
-              new Notification('Morning Rise21 Nudge ☀️', {
-                body: randomQuote,
-                icon: '/Rise21.png',
-                badge: '/Rise21.png'
-              });
-            } catch (err) {
-              console.error('Failed to trigger morning nudge:', err);
-            }
-            localStorage.setItem('rise21_last_morning_notified_date', todayStr);
-          }
+      // 1. Morning Auto Quote Notification (07:00 AM)
+      if (currentTimeStr === '07:00') {
+        const last7amNotified = localStorage.getItem('rise21_last_7am_notified_date');
+        if (last7amNotified !== todayStr) {
+          const randomQuote = getRandomQuoteMessage();
+          triggerNotification('Morning Motivation ☀️', {
+            body: randomQuote
+          });
+          setInAppToast({
+            show: true,
+            message: `🌅 Morning Quote: ${randomQuote}`
+          });
+          localStorage.setItem('rise21_last_7am_notified_date', todayStr);
         }
       }
 
-      // 2. Evening Check-In (set by user)
-      if (currentTimeStr === reminderTime) {
+      // 2. Evening Auto Quote Notification (09:30 PM / 21:30)
+      if (currentTimeStr === '21:30') {
+        const last930pmNotified = localStorage.getItem('rise21_last_930pm_notified_date');
+        if (last930pmNotified !== todayStr) {
+          const randomQuote = getRandomQuoteMessage();
+          triggerNotification('Evening Reflection 🌙', {
+            body: randomQuote
+          });
+          setInAppToast({
+            show: true,
+            message: `🌙 Evening Quote: ${randomQuote}`
+          });
+          localStorage.setItem('rise21_last_930pm_notified_date', todayStr);
+        }
+      }
+
+      // 3. User Custom Reminder Time (if configured and different from 07:00 and 21:30)
+      if (currentTimeStr === reminderTime && reminderTime !== '07:00' && reminderTime !== '21:30') {
         const lastNotified = localStorage.getItem('rise21_last_notified_date');
 
         if (lastNotified !== todayStr) {
@@ -1075,17 +1100,11 @@ export function AppProvider({ children }) {
           }).length;
 
           if (uncheckedCount > 0) {
-            const randomQuote = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            const randomQuote = getRandomQuoteMessage();
             const bodyText = `${randomQuote} You have ${uncheckedCount} challenge${uncheckedCount > 1 ? 's' : ''} left to update today.`;
-            try {
-              new Notification('Rise21 Habit Reminder 🎯', {
-                body: bodyText,
-                icon: '/Rise21.png',
-                badge: '/Rise21.png'
-              });
-            } catch (err) {
-              console.error('Failed to trigger evening reminder:', err);
-            }
+            triggerNotification('Daily Check-In 🎯', {
+              body: bodyText
+            });
 
             setInAppToast({
               show: true,
@@ -1104,7 +1123,7 @@ export function AppProvider({ children }) {
     // Check every 30 seconds
     const checkInterval = setInterval(checkAndNotify, 30000);
     return () => clearInterval(checkInterval);
-  }, [remindersEnabled, reminderTime, challenges, todayCheckIns, token]);
+  }, [remindersEnabled, reminderTime, challenges, todayCheckIns, token, dailyQuote]);
 
   return (
     <AppContext.Provider value={{
